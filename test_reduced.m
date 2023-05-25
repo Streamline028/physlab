@@ -16,10 +16,10 @@ w=dx1*(160/2);
 
 %%
 
-bu = 0.1*exp(-1i*0*(2*pi));
-au = exp(-1i*rand()*(2*pi));
+bu = 0.2*(2*pi);
+au = rand()*(2*pi);
 
-u5 = bu+bu;
+u5 = exp(-1i*0)+exp(-1i*bu);
  
 I5=(abs(u5).^2);
 
@@ -34,7 +34,7 @@ diffUsave(:,:,1) = abs(au-bu);
 
 for ii = 1:r
     
-    u0 = au+bu;
+    u0 = exp(-1i*au)+exp(-1i*0);
     Intensity = abs(u0).^2;
     
     J(1,ii+1) = Intensity;
@@ -43,15 +43,15 @@ for ii = 1:r
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
     weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
     BB=abs(au-bu);
-    diffUsave = (au-bu)./weight;
-    diffU = (diffUsave);
-    diffU(isnan(diffU)) = 0;
+%     diffUsave = (au-bu)./weight;
+%     diffU = (diffUsave);
+%     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
     
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB+diffU)); %.*perturb.*rand([MM,MM])
+    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
