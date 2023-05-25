@@ -4,7 +4,7 @@ clear all % focused gaussian beam calculator
 load('initset.mat');
 
 r=2000;
-S=16;%16*4;
+S=16*2;%16*4;
 MM=16;
 
 M=512; %256
@@ -60,7 +60,7 @@ colorbar
 bu = zeros(MM,MM).*(2*pi);
 % bbu = bbu;
 au = rand([MM,MM]).*(2*pi);
-au = preset3;
+% au = preset3;
 
 ausave(:,:,1) = au;
 
@@ -94,7 +94,7 @@ D(1,1)= 1;
 MU(1,1)=max(max(angle(bu)));
 MaxI(1,1)=max(max((abs(I5).^2)));
 MinI(1,1)=min(min((abs(I5).^2)));
-diffUsave(:,:,1) = abs(au-bu);
+diffUsave(:,:,1) = (au-bu);
 
 hold off
 % figure(3)
@@ -139,16 +139,17 @@ for ii = 1:r
 %     J(1,ii+1) = J1(1,ii+1)/JJ(1,ii+1);
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
     weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
-    BB=abs(au-bu);
-    diffUsave(:,:,ii+1) = (au-bu)./weight;
-    diffU = (diffUsave(:,:,ii+1));
-    diffU(isnan(diffU)) = 0;
+    BB=(au-bu);
+    BB = BB/abs(sum(sum(BB))).*2;
+%     diffUsave(:,:,ii+1) = (au-bu)./weight;
+%     diffU = (diffUsave(:,:,ii+1));
+%     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
     
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB+diffU)); %.*perturb.*rand([MM,MM])
+    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])+diffU
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -165,10 +166,10 @@ for ii = 1:r
 %     bu = rem(bu, (2*pi));
 %     aum = (au + weight);%2
     au = (au - WM);%2
-%     au = rem(au, (2*pi));
+    au = rem(au, (2*pi));
 %     au = (au+(au.*weight))/2;%2
     MU(1,ii+1)=max(max(au))/(2*pi);
-    au = au./ MU(1,ii+1);
+%     au = au./ MU(1,ii+1);
     if (min(min(au))<0)
         au = au - min(min(au));
     end

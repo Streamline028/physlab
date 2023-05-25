@@ -4,6 +4,7 @@ clear all % focused gaussian beam calculator
 r=2000;
 S=16;%16*4;
 MM=16;
+GG =0.5;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -14,15 +15,15 @@ lambda=1.064e-6;
 k=2*pi/lambda; 
 w=dx1*(160/2);
 
-figure(1); test_x=[0:0.001:4]; test_y=abs(exp(-1i*test_x*(2*pi))+exp(-1i*0)).^2; plot(test_x, test_y);
-hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*100+2, 'r'); hold off;
+figure(1); test_x=[0:0.001:4]; test_y=abs(exp(-1i*test_x*(2*pi))+exp(-1i*GG)).^2; plot(test_x, test_y);
+hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dy(ij)= test_dy(ij).*test_dy(ij); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*10000+2, 'r'); hold off;
 
 %%
 
 bu = 0.2*(2*pi);
 au = rand()*(2*pi);
 
-u5 = exp(-1i*0)+exp(-1i*bu);
+u5 = exp(-1i*GG)+exp(-1i*bu);
 ausave(1,1) = bu;
  
 I5=(abs(u5).^2);
@@ -38,7 +39,7 @@ diffUsave(:,:,1) = abs(au-bu);
 
 for ii = 1:r
     
-    u0 = exp(-1i*au)+exp(-1i*0);
+    u0 = exp(-1i*au)+exp(-1i*GG);
     Intensity = abs(u0).^2;
     ausave(1,ii+1) = au;
     
@@ -130,7 +131,7 @@ plot(W,'go-');
 title('dJ'); 
 subplot(2,2,3);
 plot(ausave./(2*pi),'r^-');
-title('au'); 
+title('u'); 
 subplot(2,2,4);
 plot(dusave,'y^-'); 
 title('du'); 
