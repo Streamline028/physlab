@@ -1,11 +1,13 @@
 clc
 clear all % focused gaussian beam calculator
+close all;
 
-r=2000;
+r=100;
 S=16;%16*4;
 MM=16;
 GG =0.5;
 
+ga = 1;
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
 dx1=L1/M;
@@ -14,17 +16,22 @@ y1=x1;
 lambda=1.064e-6;
 k=2*pi/lambda; 
 w=dx1*(160/2);
-
-figure(1); test_x=[0:0.001:4]; test_y=abs(exp(-1i*test_x*(2*pi))+exp(-1i*GG)).^2; plot(test_x, test_y);
-hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dy(ij)= test_dy(ij).*test_dy(ij); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*10000+2, 'r'); hold off;
+test_x=[0:0.001:2*pi]; test_y=[0:0.001:2*pi];
+[X,Y] = meshgrid(test_x,test_y); test_z=abs(exp(-1i*X)+exp(-1i*Y)).^2;
+% figure(1); 
+% imagesc(test_x,test_y,test_z);
+% axis image; axis xy;
+% colormap('gray')
+% xlabel('x');ylabel('y');
+% hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dy(ij)= test_dy(ij).*test_dy(ij); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*10000+2, 'r'); hold off;
 
 %%
 
-bu = 0.2*(2*pi);
-au = rand()*(2*pi);
+bu = rand(1,2)*(2*pi);
+au = rand(1,2)*(2*pi);
 
-u5 = exp(-1i*GG)+exp(-1i*bu);
-ausave(1,1) = bu;
+u5 = exp(-1i*bu(1,1))+exp(-1i*bu(1,2));
+ausave(:,1) = bu;
  
 I5=(abs(u5).^2);
 
@@ -39,9 +46,9 @@ diffUsave(:,:,1) = abs(au-bu);
 
 for ii = 1:r
     
-    u0 = exp(-1i*au)+exp(-1i*GG);
+    u0 = exp(-1i*au(1,1))+exp(-1i*au(1,2));
     Intensity = abs(u0).^2;
-    ausave(1,ii+1) = au;
+    ausave(:,ii+1) = au;
     
     J(1,ii+1) = Intensity;
     
@@ -49,8 +56,8 @@ for ii = 1:r
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
     weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
     BB=(au-bu);
-    BB = BB/abs(BB) *2;
-    dusave(1,ii) = BB;
+    BB = BB/abs(sum(sum(BB)));
+    dusave(:,ii) = BB;
 %     diffUsave = (au-bu)./weight;
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
@@ -59,7 +66,7 @@ for ii = 1:r
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = ga*(weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -75,13 +82,46 @@ for ii = 1:r
 %     bu = rem(bu, (2*pi));
 %     aum = (au + weight);%2
     au = (au - WM);%2
-    au = rem(au, (2*pi));
+    au = mod(au, (2*pi));
 %     au = (au+(au.*weight))/2;%2
 %     MU(1,ii+1)=max(max(au))/(2*pi);
 %     au = au./ MU(1,ii+1);
     if (min(min(au))<0)
         au = au - min(min(au));
     end
+    figure(100);
+    set(gcf,'position',[456,411,560,420]);
+    clf;
+    imagesc(test_x,test_y,test_z);
+    line(0.1*cos(0:0.01:2*pi)+au(1),0.1*sin(0:0.01:2*pi)+au(2),'Color','r','Linewidth',2);
+    axis image; axis xy;
+    colormap('gray')
+    title(sprintf("ii = %d, J = %.2f\nx = %.2f, y = %.2f, d\\phi = %.3f",ii,J(ii),au(1)/2/pi,au(2)/2/pi,(au(2)-au(1))/2/pi))
+    xlabel('x');ylabel('y');
+    xlim([0 2*pi]); ylim([0 2*pi]);
+    drawnow
+    figure(101);
+    set(gcf,'position',[1024,410,560,420]);
+    clf
+    subplot(2,2,1);
+    plot(J,'b*-'); 
+    title('J'); 
+    subplot(2,2,2);
+    plot(W,'go-'); 
+    title('dJ'); 
+    subplot(2,2,3);
+    hold on;
+    plot((ausave(1,:)./(2*pi)),'r');
+    plot((ausave(2,:)./(2*pi))+2,'b');
+    hold off;
+    title('u'); 
+    subplot(2,2,4);
+    hold on;
+    plot((dusave(1,:)./(2*pi)),'r');
+    plot((dusave(2,:)./(2*pi)),'b');
+    hold off;
+    title('du');
+    drawnow
 %     au = exp(-i./(MU(1,ii+1))*(au));%2 
 %     au = au - min(min(au));
 %     if rem(ii,30) == 0
@@ -122,7 +162,9 @@ I3=(abs(u0).^2);
 % legend('J','del J','u diff','u max');%
 % hold off
 
-figure(2) 
+figure(2)
+set(gcf,'position',[1024,410,560,420]);
+clf
 subplot(2,2,1);
 plot(J,'b*-'); 
 title('J'); 
@@ -130,8 +172,14 @@ subplot(2,2,2);
 plot(W,'go-'); 
 title('dJ'); 
 subplot(2,2,3);
-plot(ausave./(2*pi),'r^-');
+hold on;
+plot((ausave(1,:)./(2*pi)),'r');
+plot((ausave(2,:)./(2*pi))+2,'b');
+hold off;
 title('u'); 
 subplot(2,2,4);
-plot(dusave,'y^-'); 
+hold on;
+plot((dusave(1,:)./(2*pi)),'r');
+plot((dusave(2,:)./(2*pi)),'b');
+hold off;
 title('du'); 
