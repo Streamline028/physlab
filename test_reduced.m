@@ -14,6 +14,9 @@ lambda=1.064e-6;
 k=2*pi/lambda; 
 w=dx1*(160/2);
 
+figure(1); test_x=[0:0.001:4]; test_y=abs(exp(-1i*test_x*(2*pi))+exp(-1i*0)).^2; plot(test_x, test_y);
+hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*100+2, 'r'); hold off;
+
 %%
 
 bu = 0.2*(2*pi);
@@ -44,7 +47,9 @@ for ii = 1:r
 %     J(1,ii+1) = J1(1,ii+1)/JJ(1,ii+1);
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
     weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
-    BB=abs(au-bu);
+    BB=(au-bu);
+    BB = BB/abs(BB) *2;
+    dusave(1,ii) = BB;
 %     diffUsave = (au-bu)./weight;
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
@@ -53,7 +58,7 @@ for ii = 1:r
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = 2.*(weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -61,7 +66,7 @@ for ii = 1:r
 %     if (ii == 1)
 %         WM = rand([MM,MM]).*(2*pi);
 %     end
-%     WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
+    WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
 %     WM = WM./(max(max(WM))/(2*pi));
     D(1,ii+1) = sum(sum(WM))/sum(sum(au))+1;
     value(1,ii+1)=Intensity;
@@ -69,7 +74,7 @@ for ii = 1:r
 %     bu = rem(bu, (2*pi));
 %     aum = (au + weight);%2
     au = (au - WM);%2
-%     au = rem(au, (2*pi));
+    au = rem(au, (2*pi));
 %     au = (au+(au.*weight))/2;%2
 %     MU(1,ii+1)=max(max(au))/(2*pi);
 %     au = au./ MU(1,ii+1);
@@ -124,8 +129,8 @@ subplot(2,2,2);
 plot(W,'go-'); 
 title('dJ'); 
 subplot(2,2,3);
-plot(ausave,'r^-');
-% title('expectation of improvement of au'); 
-% subplot(2,2,4);
-% plot(MU,'y^-'); 
-% title('cycle count'); 
+plot(ausave./(2*pi),'r^-');
+title('au'); 
+subplot(2,2,4);
+plot(dusave,'y^-'); 
+title('du'); 
