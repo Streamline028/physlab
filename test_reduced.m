@@ -20,6 +20,7 @@ bu = 0.2*(2*pi);
 au = rand()*(2*pi);
 
 u5 = exp(-1i*0)+exp(-1i*bu);
+ausave(1,1) = bu;
  
 I5=(abs(u5).^2);
 
@@ -36,6 +37,7 @@ for ii = 1:r
     
     u0 = exp(-1i*au)+exp(-1i*0);
     Intensity = abs(u0).^2;
+    ausave(1,ii+1) = au;
     
     J(1,ii+1) = Intensity;
     
@@ -51,7 +53,7 @@ for ii = 1:r
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = 2.*(weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -120,9 +122,9 @@ plot(J,'b*-');
 title('J'); 
 subplot(2,2,2);
 plot(W,'go-'); 
-% title('(J(1,ii+1) - J(1,ii))/J(1,ii+1)'); 
-% subplot(2,2,3);
-% plot(D,'r^-');
+title('dJ'); 
+subplot(2,2,3);
+plot(ausave,'r^-');
 % title('expectation of improvement of au'); 
 % subplot(2,2,4);
 % plot(MU,'y^-'); 
