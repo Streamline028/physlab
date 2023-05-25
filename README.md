@@ -5,5 +5,6 @@
 
 # references
 
-## propFF propTF, propIR, tilt, rect, tri, circ, jinc, focus, Fraunhofer_irradiance, GaussianBeam
-* Voelz, David George, 『Computational fourier optics : a MATLAB tutorial』, SPIE, 2010
+## Voelz, David George, 『Computational fourier optics : a MATLAB tutorial』, SPIE, 2010
+
+propFF propTF, propIR, tilt, rect, tri, circ, jinc, focus, Fraunhofer_irradiance, GaussianBeam
