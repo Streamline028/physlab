@@ -4,7 +4,7 @@ clear all % focused gaussian beam calculator
 load('initset.mat');
 
 r=2000;
-S=16*2;%16*4;
+S=16;%16*4;
 MM=16;
 
 M=512; %256
@@ -140,16 +140,18 @@ for ii = 1:r
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
     weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
     BB=(au-bu);
-    BB = BB/abs(sum(sum(BB))).*2;
+    BB = BB/abs(sum(sum(BB)));
 %     diffUsave(:,:,ii+1) = (au-bu)./weight;
 %     diffU = (diffUsave(:,:,ii+1));
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    
+    gamma(1,ii) = (pi*(JJ(1,ii+1)/2))/(J(1,ii+1)+1);
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])+diffU
+
+    WM = gamma(1,ii).*(weight.*(BB)); %.*perturb.*rand([MM,MM])+diffU    
+%     WM = sign(WM).*(sqrt(abs(WM)));
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -157,7 +159,7 @@ for ii = 1:r
 %     if (ii == 1)
 %         WM = rand([MM,MM]).*(2*pi);
 %     end
-    WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
+    WM = gamma(1,ii).*rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
 %     WM = WM./(max(max(WM))/(2*pi));
     D(1,ii+1) = sum(sum(WM))/sum(sum(au))+1;
     MaxI(1,ii+1)=max(max((Intensity)));
@@ -327,5 +329,5 @@ subplot(2,2,3);
 plot(D,'r^-');
 title('expectation of improvement of au'); 
 subplot(2,2,4);
-plot(MU,'y^-'); 
-title('cycle count'); 
+plot(gamma,'y^-'); 
+title('gamma'); 

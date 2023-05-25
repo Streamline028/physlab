@@ -7,7 +7,6 @@ S=16;%16*4;
 MM=16;
 GG =0.5;
 
-ga = 1;
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
 dx1=L1/M;
@@ -62,11 +61,11 @@ for ii = 1:r
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    
+    gamma = (pi)./(J(1,ii+1)+1);
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = ga*(weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = gamma .* (weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);

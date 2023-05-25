@@ -1,7 +1,7 @@
 clc
 clear all % focused gaussian beam calculator
 
-r=2000;
+r=1000;
 S=16;%16*4;
 MM=16;
 GG =0.5;
@@ -55,11 +55,12 @@ for ii = 1:r
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    
+    ga = 4/J(1,ii+1);
+    ga(isnan(ga)) = 1;
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = ga*(weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
