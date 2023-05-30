@@ -62,11 +62,12 @@ for ii = 1:r
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    gamma = (pi)./(J(1,ii+1)+1);
+    gamma = (pi)./(J(1,ii+1));
+    gamma(isnan(gamma)) = 1;
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])gamma .* 
+    WM = gamma .* (weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);

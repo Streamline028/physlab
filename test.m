@@ -60,7 +60,7 @@ colorbar
 bu = zeros(MM,MM).*(2*pi);
 % bbu = bbu;
 au = rand([MM,MM]).*(2*pi);
-au = preset1;
+% au = preset1;
 
 ausave(:,:,1) = au;
 
@@ -315,7 +315,7 @@ subplot(4,4,16);
 hold off
 plot(Jratio,'b*-'); 
 hold on
-title('PBR');  xlabel('iteration count'); ylabel('percentage'); 
+title('intensity ratio');  xlabel('iteration count'); ylabel('percentage'); 
 hold off
 
 figure(2) 

@@ -55,12 +55,12 @@ for ii = 1:r
 %     diffU = (diffUsave);
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    ga = 4/J(1,ii+1);
+    ga(1,ii) = 2.6/J(1,ii+1);
     ga(isnan(ga)) = 1;
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = ga*(weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = ga(1,ii)*(weight.*(BB)); %.*perturb.*rand([MM,MM])
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -136,3 +136,7 @@ title('바꾸어 주는 빛의 위상');
 subplot(2,2,4);
 plot(dusave,'y^-'); 
 title('위상의 변화량'); 
+
+figure(10) 
+plot(ga,'*-'); 
+title('gamma'); 

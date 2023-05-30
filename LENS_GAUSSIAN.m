@@ -2,6 +2,7 @@ clc
 clear all
 
 M=512; %256
+S=16*4;
 L1=M*15e-6; %3.84e-3; 
 dx1=L1/M;
 x1=-L1/2:dx1:L1/2-dx1; 
@@ -24,10 +25,13 @@ R1=radCal(I1);
 
 figure(1)
 imagesc(x1,y1,I1); 
+hold on
+rectangle('Position',[-S/2*dx1 -S/2*dx1 S*dx1 S*dx1], 'EdgeColor','r','LineWidth',1);
 axis square; axis xy; 
 colormap('gray'); xlabel('x (m)'); ylabel('y (m)'); 
 title(['initial : ','radius = ',num2str(R1*dx1*1000),'mm']); 
 colorbar
+hold off
 
 figure(2) 
 imagesc(x1,y1,P1); 
@@ -47,17 +51,20 @@ I2=(abs(u2).^2);
 R2=radCal(I2);
 
 JJ = sum(sum((I2)));
-J = chk_J((I2),16*4);
+J = chk_J((I2),S);
 Jmax = max(max((I2)));
 
 Jratio=J/JJ*100;
 
 figure(3) 
 imagesc(x2,y2,I2);
+hold on
+rectangle('Position',[-S/2*dx1 -S/2*dx1 S*dx1 S*dx1], 'EdgeColor','r','LineWidth',1);
 axis square; axis xy; 
 colormap('gray'); xlabel('x (m)'); ylabel('y (m)'); 
 title(['result : ','radius = ',num2str(R2*dx1*1000),'mm']); 
 colorbar
+hold off
 
 x3=x1; 
 y3=y1; 
