@@ -126,13 +126,13 @@ I3=(abs(u0).^2);
 figure(2) 
 subplot(2,2,1);
 plot(J,'b*-'); 
-title('J'); 
+title('beam 중심의 intensity'); 
 subplot(2,2,2);
 plot(W,'go-'); 
-title('dJ'); 
+title('intensity의 변화량'); 
 subplot(2,2,3);
 plot(ausave./(2*pi),'r^-');
-title('u'); 
+title('바꾸어 주는 빛의 위상'); 
 subplot(2,2,4);
 plot(dusave,'y^-'); 
-title('du'); 
+title('위상의 변화량'); 

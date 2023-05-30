@@ -6,6 +6,7 @@ r=100;
 S=16;%16*4;
 MM=16;
 GG =0.5;
+filename = 'test_reduced2.gif';
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -65,7 +66,7 @@ for ii = 1:r
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
-    WM = gamma .* (weight.*(BB)); %.*perturb.*rand([MM,MM])
+    WM = (weight.*(BB)); %.*perturb.*rand([MM,MM])gamma .* 
 %     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
 %     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
 %     WM = weight.*(diffU);
@@ -99,28 +100,36 @@ for ii = 1:r
     xlabel('x');ylabel('y');
     xlim([0 2*pi]); ylim([0 2*pi]);
     drawnow
-    figure(101);
-    set(gcf,'position',[1024,410,560,420]);
-    clf
-    subplot(2,2,1);
-    plot(J,'b*-'); 
-    title('J'); 
-    subplot(2,2,2);
-    plot(W,'go-'); 
-    title('dJ'); 
-    subplot(2,2,3);
-    hold on;
-    plot((ausave(1,:)./(2*pi)),'r');
-    plot((ausave(2,:)./(2*pi))+2,'b');
-    hold off;
-    title('u'); 
-    subplot(2,2,4);
-    hold on;
-    plot((dusave(1,:)./(2*pi)),'r');
-    plot((dusave(2,:)./(2*pi)),'b');
-    hold off;
-    title('du');
-    drawnow
+    frame = getframe(100); 
+    img = frame2im(frame);
+    [imind cm] = rgb2ind(img,256); 
+    if ii == 1
+        imwrite(imind,cm,filename,'gif','Loopcount',1,'DelayTime',1/5); 
+    else
+        imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',1/5); 
+    end
+% %     figure(101);
+% %     set(gcf,'position',[1024,410,560,420]);
+% %     clf
+% %     subplot(2,2,1);
+% %     plot(J,'b*-'); 
+% %     title('J'); 
+% %     subplot(2,2,2);
+% %     plot(W,'go-'); 
+% %     title('dJ'); 
+% %     subplot(2,2,3);
+% %     hold on;
+% %     plot((ausave(1,:)./(2*pi)),'r');
+% %     plot((ausave(2,:)./(2*pi))+2,'b');
+% %     hold off;
+% %     title('u'); 
+% %     subplot(2,2,4);
+% %     hold on;
+% %     plot((dusave(1,:)./(2*pi)),'r');
+% %     plot((dusave(2,:)./(2*pi)),'b');
+% %     hold off;
+% %     title('du');
+% %     drawnow
 %     au = exp(-i./(MU(1,ii+1))*(au));%2 
 %     au = au - min(min(au));
 %     if rem(ii,30) == 0
@@ -166,19 +175,19 @@ set(gcf,'position',[1024,410,560,420]);
 clf
 subplot(2,2,1);
 plot(J,'b*-'); 
-title('J'); 
+title('beam 중심의 intensity'); 
 subplot(2,2,2);
 plot(W,'go-'); 
-title('dJ'); 
+title('intensity의 변화량'); 
 subplot(2,2,3);
 hold on;
 plot((ausave(1,:)./(2*pi)),'r');
-plot((ausave(2,:)./(2*pi))+2,'b');
+plot((ausave(2,:)./(2*pi)),'b');
 hold off;
-title('u'); 
+title('각 beam의 위상'); 
 subplot(2,2,4);
 hold on;
 plot((dusave(1,:)./(2*pi)),'r');
 plot((dusave(2,:)./(2*pi)),'b');
 hold off;
-title('du'); 
+title('각 beam의 위상의 변화량'); 

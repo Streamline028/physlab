@@ -4,7 +4,7 @@ clear all % focused gaussian beam calculator
 load('initset.mat');
 
 r=2000;
-S=16;%16*4;
+S=16*4;%16*4;
 MM=16;
 
 M=512; %256
@@ -60,7 +60,7 @@ colorbar
 bu = zeros(MM,MM).*(2*pi);
 % bbu = bbu;
 au = rand([MM,MM]).*(2*pi);
-% au = preset3;
+au = preset1;
 
 ausave(:,:,1) = au;
 
@@ -138,14 +138,14 @@ for ii = 1:r
     Jratio(1,ii+1)=1/(JJ(1,ii+1)/J(1,ii+1)-1)*100;
 %     J(1,ii+1) = J1(1,ii+1)/JJ(1,ii+1);
     W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
-    weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
+    weight=(W(1,ii+1)); %->multithread Jratio(1,ii+1)
     BB=(au-bu);
     BB = BB/abs(sum(sum(BB)));
 %     diffUsave(:,:,ii+1) = (au-bu)./weight;
 %     diffU = (diffUsave(:,:,ii+1));
 %     diffU(isnan(diffU)) = 0;
 %     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    gamma(1,ii) = (pi*(JJ(1,ii+1)/2))/(J(1,ii+1)+1);
+    gamma(1,ii) = (pi)/(Jratio(1,ii+1));% max(J)-J(1,ii+1)+1;W(1,ii+1)
 %     if sum(sum(BB))<=0.01
 %         break
 %     end
@@ -159,7 +159,7 @@ for ii = 1:r
 %     if (ii == 1)
 %         WM = rand([MM,MM]).*(2*pi);
 %     end
-    WM = gamma(1,ii).*rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
+    WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
 %     WM = WM./(max(max(WM))/(2*pi));
     D(1,ii+1) = sum(sum(WM))/sum(sum(au))+1;
     MaxI(1,ii+1)=max(max((Intensity)));
@@ -167,7 +167,7 @@ for ii = 1:r
     bu = au;
 %     bu = rem(bu, (2*pi));
 %     aum = (au + weight);%2
-    au = (au - WM);%2
+    au = (au + WM);%2
     au = rem(au, (2*pi));
 %     au = (au+(au.*weight))/2;%2
     MU(1,ii+1)=max(max(au))/(2*pi);
