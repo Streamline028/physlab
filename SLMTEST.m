@@ -2,6 +2,9 @@ clear all % focused gaussian beam calculator
 close all
 clc
 
+addpath(genpath('.\Book_Reference_Code'))
+addpath(genpath('.\module'))
+
 % addpath(genpath('C:\Users\a0105\Documents\MATLAB\TM'))
 
 %% SLM calibration
