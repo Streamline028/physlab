@@ -5,14 +5,12 @@ close all;
 addpath(genpath('.\Book_Reference_Code'))
 addpath(genpath('.\module'))
 
-r=100;
-S=16;%16*4;
-MM=16;
-GG =0.5;
+Iterration_Count=100;
+
 filename = 'test_reduced2.gif';
 
-M=512; %256
-L1=M*15e-6; %3.84e-3; 
+M=512;
+L1=M*15e-6; 
 dx1=L1/M;
 x1=-L1/2:dx1:L1/2-dx1; 
 y1=x1;
@@ -21,86 +19,52 @@ k=2*pi/lambda;
 w=dx1*(160/2);
 test_x=[0:0.001:2*pi]; test_y=[0:0.001:2*pi];
 [X,Y] = meshgrid(test_x,test_y); test_z=abs(exp(-1i*X)+exp(-1i*Y)).^2;
-% figure(1); 
-% imagesc(test_x,test_y,test_z);
-% axis image; axis xy;
-% colormap('gray')
-% xlabel('x');ylabel('y');
-% hold on; for (ij = 1:size(test_x,2)-1) test_dy(ij)=(test_y(ij+1)-test_y(ij)); test_dy(ij)= test_dy(ij).*test_dy(ij); test_dx(ij) = test_x(ij); end; plot(test_dx, test_dy*10000+2, 'r'); hold off;
 
 %%
 
-bu = rand(1,2)*(2*pi);
-au = rand(1,2)*(2*pi);
+Before_U = rand(1,2)*(2*pi);
+After_U = rand(1,2)*(2*pi);
 
-u5 = exp(-1i*bu(1,1))+exp(-1i*bu(1,2));
-ausave(:,1) = bu;
+Before_Beam_Flow = exp(-1i*Before_U(1,1))+exp(-1i*Before_U(1,2));
+Usave(:,1) = Before_U;
  
-I5=(abs(u5).^2);
+Before_Beam_Intensity=(abs(Before_Beam_Flow).^2);
 
-J(1,1) = I5;
-% J(1,1) = J1(1,1)/JJ(1,1);
-W(1,1)= 1;
-D(1,1)= 1;
-MU(1,1)=max(max(angle(bu)));
-MaxI(1,1)=max(max((abs(I5).^2)));
-MinI(1,1)=min(min((abs(I5).^2)));
-diffUsave(:,:,1) = abs(au-bu);
+Target_Intensity_Sum(1,1) = Before_Beam_Intensity;
+dJ(1,1)= 1;
+dUsave(:,:,1) = abs(After_U-Before_U);
 
-for ii = 1:r
+for ii = 1:Iterration_Count
     
-    u0 = exp(-1i*au(1,1))+exp(-1i*au(1,2));
-    Intensity = abs(u0).^2;
-    ausave(:,ii+1) = au;
+    After_Beam_Flow = exp(-1i*After_U(1,1))+exp(-1i*After_U(1,2));
+    After_Beam_Intensity = abs(After_Beam_Flow).^2;
+    Usave(:,ii+1) = After_U;
     
-    J(1,ii+1) = Intensity;
+    Target_Intensity_Sum(1,ii+1) = After_Beam_Intensity;
     
-%     J(1,ii+1) = J1(1,ii+1)/JJ(1,ii+1);
-    W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
-    weight=(W(1,ii+1)); %->multithread 1/Jratio(1,ii+1)
-    BB=(au-bu);
-    BB = BB/abs(sum(sum(BB)));
-    dusave(:,ii) = BB;
-%     diffUsave = (au-bu)./weight;
-%     diffU = (diffUsave);
-%     diffU(isnan(diffU)) = 0;
-%     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    gamma = (pi)./(J(1,ii+1));
-    gamma(isnan(gamma)) = 1;
-%     if sum(sum(BB))<=0.01
-%         break
-%     end
-    WM = gamma .* (weight.*(BB)); %.*perturb.*rand([MM,MM])
-%     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
-%     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
-%     WM = weight.*(diffU);
-%     WM = (weight.*diffUsave(:,:,ii+1)); %.*rand([MM,MM])
-%     if (ii == 1)
-%         WM = rand([MM,MM]).*(2*pi);
-%     end
-    WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
-%     WM = WM./(max(max(WM))/(2*pi));
-    D(1,ii+1) = sum(sum(WM))/sum(sum(au))+1;
-    value(1,ii+1)=Intensity;
-    bu = au;
-%     bu = rem(bu, (2*pi));
-%     aum = (au + weight);%2
-    au = (au - WM);%2
-    au = mod(au, (2*pi));
-%     au = (au+(au.*weight))/2;%2
-%     MU(1,ii+1)=max(max(au))/(2*pi);
-%     au = au./ MU(1,ii+1);
-    if (min(min(au))<0)
-        au = au - min(min(au));
+    dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
+    Gamma = (pi)./(Target_Intensity_Sum(1,ii+1));
+    Gamma(isnan(Gamma)) = 1;
+    weight=Gamma .* (dJ(1,ii+1));
+    dU=(After_U-Before_U);
+    dUsave(:,ii) = dU;
+    J_prime = (weight.*(dU)); 
+    J_prime = rem((J_prime), (2*pi)); 
+    Intensity_save(1,ii+1)=After_Beam_Intensity;
+    Before_U = After_U;
+    After_U = (After_U - J_prime);
+    After_U = mod(After_U, (2*pi));
+    if (min(min(After_U))<0)
+        After_U = After_U - min(min(After_U));
     end
     figure(100);
     set(gcf,'position',[456,411,560,420]);
     clf;
     imagesc(test_x,test_y,test_z);
-    line(0.1*cos(0:0.01:2*pi)+au(1),0.1*sin(0:0.01:2*pi)+au(2),'Color','r','Linewidth',2);
+    line(0.1*cos(0:0.01:2*pi)+After_U(1),0.1*sin(0:0.01:2*pi)+After_U(2),'Color','r','Linewidth',2);
     axis image; axis xy;
     colormap('gray')
-    title(sprintf("ii = %d, J = %.2f\nx = %.2f, y = %.2f, d\\phi = %.3f",ii,J(ii),au(1)/2/pi,au(2)/2/pi,(au(2)-au(1))/2/pi))
+    title(sprintf("ii = %d, J = %.2f\nx = %.2f, y = %.2f, d\\phi = %.3f",ii,Target_Intensity_Sum(ii),After_U(1)/2/pi,After_U(2)/2/pi,(After_U(2)-After_U(1))/2/pi))
     xlabel('x');ylabel('y');
     xlim([0 2*pi]); ylim([0 2*pi]);
     drawnow
@@ -134,64 +98,31 @@ for ii = 1:r
 % %     hold off;
 % %     title('du');
 % %     drawnow
-%     au = exp(-i./(MU(1,ii+1))*(au));%2 
-%     au = au - min(min(au));
-%     if rem(ii,30) == 0
-%         au=au+((rand([MM,MM])-0.5)*(2*pi));%| MU(1,ii+1) == 0 30
-%     end
-    if W(1,ii+1) == 0 %& half == 0
+
+    if dJ(1,ii+1) == 0
         break
     end
-%     if J(1,i+1) == inf | D(1,i+1) == inf
-%         break
-%     end
     
 end
-
-I3=(abs(u0).^2);
-
-% % figure(8)                                                                                         % rescaled figure of J, delta J, change amount of au, cycle of au
-% subplot(4,4,11);
-% hold off
-% plot(rescale(J),'b*-');                                                                             % cacluated J value during iterration
-% hold on
-% plot(rescale(W),'go-');                                                                             % improvement of output during iterration
-% plot(rescale(D),'r^-');                                                                             % expectation of improvement of au
-% plot(rescale(MU),'y^-');                                                                            % au's cycle count
-% title('J'); 
-% legend('J','del J','u diff','u max');%
-% hold off
-
-% figure(10) 
-% subplot(4,4,14);
-% hold off
-% plot((J),'b*-'); 
-% hold on
-% plot((W),'go-'); 
-% % plot(rescale(D),'r^-'); 
-% % plot(rescale(MU),'y^-'); 
-% title('J'); 
-% legend('J','del J','u diff','u max');%
-% hold off
 
 figure(2)
 set(gcf,'position',[1024,410,560,420]);
 clf
 subplot(2,2,1);
-plot(J,'b*-'); 
+plot(Target_Intensity_Sum,'b*-'); 
 title('beam 중심의 intensity'); 
 subplot(2,2,2);
-plot(W,'go-'); 
+plot(dJ,'go-'); 
 title('intensity의 변화량'); 
 subplot(2,2,3);
 hold on;
-plot((ausave(1,:)./(2*pi)),'r');
-plot((ausave(2,:)./(2*pi)),'b');
+plot((Usave(1,:)./(2*pi)),'r');
+plot((Usave(2,:)./(2*pi)),'b');
 hold off;
 title('각 beam의 위상'); 
 subplot(2,2,4);
 hold on;
-plot((dusave(1,:)./(2*pi)),'r');
-plot((dusave(2,:)./(2*pi)),'b');
+plot((dUsave(1,:)./(2*pi)),'r');
+plot((dUsave(2,:)./(2*pi)),'b');
 hold off;
 title('각 beam의 위상의 변화량'); 

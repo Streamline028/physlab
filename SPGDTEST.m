@@ -126,8 +126,6 @@ for ii = 1:Iterration_Count
     
     Image_Intensity_Sum(1,ii+1) = sum(sum((After_Beam_Intensity)));
     Target_Intensity_Sum(1,ii+1) = chk_J((After_Beam_Intensity),Checking_Size);
-    
-    
     Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
     Gamma(1,ii) = (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));
