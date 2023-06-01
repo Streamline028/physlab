@@ -174,9 +174,9 @@ for ii = 1:Iterration_Count                                                % run
         Target_Intensity_Sum(1,ii+1)/Image_Intensity_Sum(1,ii+1)*100;      % ratio of total to target
     dJ(1,ii+1)=(Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii));% value of change in J
     Gamma(1,ii) = ...
-        (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));
-    weight=Gamma(1,ii).*(dJ(1,ii+1));                                      % calcualte J'
-    dU=(After_U-Before_U);                                                 % (choose one of two) change of actual phase of u
+        (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));     % calculate Gamma value
+    weight=Gamma(1,ii).*(dJ(1,ii+1));                                      % calcualte Gamma X dJ
+    dU=(After_U-Before_U);                                                 % change of actual phase of u
     J_prime = rem((BB.* weight), (2*pi));                                  % change factor of au
     Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
     Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value

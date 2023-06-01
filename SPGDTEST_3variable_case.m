@@ -7,8 +7,6 @@ addpath(genpath('.\module'))
 
 Iterration_Count=100;
 
-filename = 'test_reduced2.gif';
-
 M=512;
 L1=M*15e-6; 
 dx1=L1/M;
@@ -17,15 +15,13 @@ y1=x1;
 lambda=1.064e-6;
 k=2*pi/lambda; 
 w=dx1*(160/2);
-test_x=[0:0.001:2*pi]; test_y=[0:0.001:2*pi];
-[X,Y] = meshgrid(test_x,test_y); test_z=abs(exp(-1i*X)+exp(-1i*Y)).^2;
 
 %%
 
-Before_U = rand(1,2)*(2*pi);
-After_U = rand(1,2)*(2*pi);
+Before_U = rand(1,3)*(2*pi);
+After_U = rand(1,3)*(2*pi);
 
-Before_Beam_Flow = exp(-1i*Before_U(1,1))+exp(-1i*Before_U(1,2));
+Before_Beam_Flow = exp(-1i*Before_U(1,1))+exp(-1i*Before_U(1,2))+exp(-1i*Before_U(1,3));
 Usave(:,1) = Before_U;
  
 Before_Beam_Intensity=(abs(Before_Beam_Flow).^2);
@@ -56,25 +52,6 @@ for ii = 1:Iterration_Count
     After_U = mod(After_U, (2*pi));
     if (min(min(After_U))<0)
         After_U = After_U - min(min(After_U));
-    end
-    figure(100);
-    set(gcf,'position',[456,411,560,420]);
-    clf;
-    imagesc(test_x,test_y,test_z);
-    line(0.1*cos(0:0.01:2*pi)+After_U(1),0.1*sin(0:0.01:2*pi)+After_U(2),'Color','r','Linewidth',2);
-    axis image; axis xy;
-    colormap('gray')
-    title(sprintf("ii = %d, J = %.2f\nx = %.2f, y = %.2f, d\\phi = %.3f",ii,Target_Intensity_Sum(ii),After_U(1)/2/pi,After_U(2)/2/pi,(After_U(2)-After_U(1))/2/pi))
-    xlabel('x');ylabel('y');
-    xlim([0 2*pi]); ylim([0 2*pi]);
-    drawnow
-    frame = getframe(100); 
-    img = frame2im(frame);
-    [imind cm] = rgb2ind(img,256); 
-    if ii == 1
-        imwrite(imind,cm,filename,'gif','Loopcount',1,'DelayTime',1/5); 
-    else
-        imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',1/5); 
     end
 % %     figure(101);
 % %     set(gcf,'position',[1024,410,560,420]);
