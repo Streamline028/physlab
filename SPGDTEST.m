@@ -1,14 +1,14 @@
 clc
-clear all % focused gaussian beam calculator
+clear all
 
 addpath(genpath('.\Book_Reference_Code'))
 addpath(genpath('.\module'))
 
 load('initset.mat');
 
-r=2000;
-S=16*4;%16*4;
-MM=16;
+Iterration_Count=2000;
+Checking_Size=16*4;%16*4;
+Super_Pixels=16;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -26,179 +26,140 @@ zf2=z2;
 [X1,Y1]=meshgrid(x1,y1);
 [theta,rho]=cart2pol(X1,Y1);
 
-u1=zeros(M,M);
-u1=exp(-(rho.^2)/w^2);
+Initial_Beam_Flow=zeros(M,M);
+Initial_Beam_Flow=exp(-(rho.^2)/w^2);
 
 perturb = (binornd(ones(16,16),ones(16,16)./2)-0.5); %.*(4*pi)
 
-P1=angle(u1);
-I1=(abs(u1).^2);
-R1=radCal(I1);
+Initial_Beam_Phase=angle(Initial_Beam_Flow);
+Initial_Beam_Intensity=(abs(Initial_Beam_Flow).^2);
+Initial_Beam_Radius=radCal(Initial_Beam_Intensity);
 
-Jratio_init=1/(sum(sum(I1))/chk_J(I1,S)-1)*100;
+Jratio_init=1/(sum(sum(Initial_Beam_Intensity))/chk_J(Initial_Beam_Intensity,Checking_Size)-1)*100;
+
+%% plot area
 
 hold off
 figure(1)
 subplot(4,4,1);
-imagesc(x1/1e-3,y1/1e-3,I1); 
+imagesc(x1/1e-3,y1/1e-3,Initial_Beam_Intensity); 
 hold on
-rectangle('Position',[-S/2*dx1/1e-3 -S/2*dx1/1e-3 S*dx1/1e-3 S*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
-text(S/2*dx1/1e-3, -S/2*dx1/1e-3,[num2str(Jratio_init)],'Color','red');
+rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
+text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Jratio_init)],'Color','red');
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
-title(['result : ','radius = ',num2str(R1*0.0150),'mm']); 
+title(['result : ','radius = ',num2str(Initial_Beam_Radius*0.0150),'mm']); 
 colorbar
 hold off
 
 % figure(2) 
 subplot(4,4,2);
-imagesc(x1/1e-3,y1/1e-3,P1); 
+imagesc(x1/1e-3,y1/1e-3,Initial_Beam_Phase); 
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
 title('align'); 
 colorbar
 
-%%
+%% SPGD initializing
 
-bu = zeros(MM,MM).*(2*pi);
-% bbu = bbu;
-au = rand([MM,MM]).*(2*pi);
+Before_U = zeros(Super_Pixels,Super_Pixels).*(2*pi);
+After_U = rand([Super_Pixels,Super_Pixels]).*(2*pi);
 % au = preset1;
 
-ausave(:,:,1) = au;
+Usave(:,:,1) = After_U;
+Initial_U = After_U;
 
-initu = au;
+Before_U_expand = padarray(expand(Before_U),[128 128],0,'both');
 
-bu_ = padarray(expand(bu),[128 128],0,'both');
+Changing_Beam_Flow=Initial_Beam_Flow;
 
-% figure(3) 
-% imagesc(bu_); 
-% axis square; axis xy; 
-% colormap('gray');
-% colorbar
+Before_Beam_Flow=propTF(Initial_Beam_Flow.*exp(-1i*Before_U_expand),L1,lambda,2*z);
+Before_Beam_Flow=propTF(Before_Beam_Flow,L1,lambda,2*z);
 
-uu=u1;
+Before_Beam_Phase=angle(Before_Beam_Flow)/pi+1; 
+Before_Beam_Intensity=(abs(Before_Beam_Flow).^2);
+Before_Beam_Radius=radCal(Before_Beam_Intensity);
 
-u5=propTF(u1.*exp(-1i*bu_),L1,lambda,2*z);
-% [u5]=focus(u5,L1,lambda,zf);
-u5=propTF(u5,L1,lambda,2*z);
+Image_Intensity_Sum(1,1) = sum(sum(Before_Beam_Intensity));
+Target_Intensity_Sum(1,1) = chk_J(Before_Beam_Intensity,Checking_Size);
+Target_Intensity_Ratio(1,1)=1/(Image_Intensity_Sum(1,1)/Target_Intensity_Sum(1,1)-1)*100;
+dJ(1,1)= 1;
+MaxValue_U(1,1)=max(max(angle(Before_U)));
+Max_Intensity(1,1)=max(max((abs(Before_Beam_Intensity).^2)));
+Min_Intensity(1,1)=min(min((abs(Before_Beam_Intensity).^2)));
+dUsave(:,:,1) = (After_U-Before_U);
 
-P5=angle(u5)/pi+1; 
-I5=(abs(u5).^2);
-R5=radCal(I5);
-
-JJ(1,1) = sum(sum(I5));
-J(1,1) = chk_J(I5,S);
-% J(1,1) = 0;
-Jratio(1,1)=1/(JJ(1,1)/J(1,1)-1)*100;
-% J(1,1) = J1(1,1)/JJ(1,1);
-W(1,1)= 1;
-D(1,1)= 1;
-MU(1,1)=max(max(angle(bu)));
-MaxI(1,1)=max(max((abs(I5).^2)));
-MinI(1,1)=min(min((abs(I5).^2)));
-diffUsave(:,:,1) = (au-bu);
+%% plot area
 
 hold off
 % figure(3)
 subplot(4,4,3);
-imagesc(x1/1e-3,y1/1e-3,I5);
+imagesc(x1/1e-3,y1/1e-3,Before_Beam_Intensity);
 hold on
-rectangle('Position',[-S/2*dx1/1e-3 -S/2*dx1/1e-3 S*dx1/1e-3 S*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
-text(S/2*dx1/1e-3, -S/2*dx1/1e-3,[num2str(Jratio(1,1))],'Color','red');
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
+text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,1))],'Color','red');
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
-title(['result : ','radius = ',num2str(R5*0.0150),'mm']); 
+title(['result : ','radius = ',num2str(Before_Beam_Radius*0.0150),'mm']); 
 colorbar
 hold off
 
 % figure(4) 
 subplot(4,4,4);
-imagesc(x1/1e-3,y1/1e-3,P5); 
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+imagesc(x1/1e-3,y1/1e-3,Before_Beam_Phase); 
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
 title('align'); 
 colorbar
-%u0=uu.*expand(au);[u0]=focus(u0,L1,lambda,zf);u0=propTF(u0,L1,lambda,2*z);
-for ii = 1:r
-    
-%     u0=uu;
-    ausave(:,:,ii+1) = au;
-    au_ = padarray(expand(au),[128 128],0,'both');
 
-    u0=propTF(uu.*exp(-1i*au_),L1,lambda,2*z);
-%     [u0]=focus(u0,L1,lambda,zf);
-    u0=propTF(u0,L1,lambda,2*z);
-    Intensity = abs(u0).^2;
-    Isave(:,:,ii) = Intensity;
-    
-    JJ(1,ii+1) = sum(sum((Intensity)));
-    J(1,ii+1) = chk_J((Intensity),S);
-    
-    
-    Jratio(1,ii+1)=1/(JJ(1,ii+1)/J(1,ii+1)-1)*100;
-%     J(1,ii+1) = J1(1,ii+1)/JJ(1,ii+1);
-    W(1,ii+1)=((J(1,ii+1) - J(1,ii)));% /mean(J)
-    weight=(Jratio(1,ii+1) - Jratio(1,ii)); %->multithread W(1,ii+1)
-    BB=(au-bu);
-%     BB = BB/abs(sum(sum(BB)));
-%     diffUsave(:,:,ii+1) = (au-bu)./weight;
-%     diffU = (diffUsave(:,:,ii+1));
-%     diffU(isnan(diffU)) = 0;
-%     diffUsave(isnan(diffUsave(:,:,ii+1)),ii+1) = 0;
-    gamma(1,ii) = (max(J)*pi)/(J(1,ii+1));% max(J)-J(1,ii+1)+1;  W(1,ii+1)  Jratio(1,ii+1)  
-%     if sum(sum(BB))<=0.01
-%         break
-%     end
+%% SPGD Loop
 
-    WM = gamma(1,ii).*(weight.*(BB)); %.*perturb.*rand([MM,MM])+diffU    
-%     WM = sign(WM).*(sqrt(abs(WM)));
-%     diffU = (diffUsave(:,:,ii)-diffUsave(:,:,ii+1))/sign(W(1,ii)-W(1,ii+1));%
-%     diffU = (diffUsave(:,:,ii+1))/sign(W(1,ii+1));
-%     WM = weight.*(diffU);
-%     WM = (weight.*diffUsave(:,:,ii+1)); %.*rand([MM,MM])
-%     if (ii == 1)
-%         WM = rand([MM,MM]).*(2*pi);
-%     end
-    WM = rem((WM), (2*pi));   %.*(binornd(ones(16,16),ones(16,16)./2)-0.5).*(4*pi)
-%     WM = WM./(max(max(WM))/(2*pi));
-    D(1,ii+1) = sum(sum(WM))/sum(sum(au))+1;
-    MaxI(1,ii+1)=max(max((Intensity)));
-    MinI(1,ii+1)=min(min((Intensity)));
-    bu = au;
-%     bu = rem(bu, (2*pi));
-%     aum = (au + weight);%2
-    au = (au + WM);%2
-    au = rem(au, (2*pi));
-%     au = (au+(au.*weight))/2;%2
-    MU(1,ii+1)=max(max(au))/(2*pi);
-%     au = au./ MU(1,ii+1);
-    if (min(min(au))<0)
-        au = au - min(min(au));
+for ii = 1:Iterration_Count
+    
+    Usave(:,:,ii+1) = After_U;
+    After_U_expand = padarray(expand(After_U),[128 128],0,'both');
+
+    After_Beam_Flow=propTF(Changing_Beam_Flow.*exp(-1i*After_U_expand),L1,lambda,2*z);
+    After_Beam_Flow=propTF(After_Beam_Flow,L1,lambda,2*z);
+    After_Beam_Intensity = abs(After_Beam_Flow).^2;
+    Intensity_save(:,:,ii) = After_Beam_Intensity;
+    
+    Image_Intensity_Sum(1,ii+1) = sum(sum((After_Beam_Intensity)));
+    Target_Intensity_Sum(1,ii+1) = chk_J((After_Beam_Intensity),Checking_Size);
+    
+    
+    Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
+    dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
+    Gamma(1,ii) = (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));
+    Weight=Gamma(1,ii).*(dJ(1,ii+1));
+    dU=(After_U-Before_U);
+    J_prime = (Weight.*(dU));
+    J_prime = rem((J_prime), (2*pi));
+    Max_Intensity(1,ii+1)=max(max((After_Beam_Intensity)));
+    Min_Intensity(1,ii+1)=min(min((After_Beam_Intensity)));
+    Before_U = After_U;
+    After_U = (After_U + J_prime);
+    After_U = rem(After_U, (2*pi));
+    MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);
+    if (min(min(After_U))<0)
+        After_U = After_U - min(min(After_U));
     end
-%     au = exp(-i./(MU(1,ii+1))*(au));%2 
-%     au = au - min(min(au));
-%     if rem(ii,30) == 0
-%         au=au+((rand([MM,MM])-0.5)*(2*pi));%| MU(1,ii+1) == 0 30
-%     end
-    if W(1,ii+1) == 0 %& half == 0
+    if dJ(1,ii+1) == 0
         break
     end
-%     if J(1,i+1) == inf | D(1,i+1) == inf
-%         break
-%     end
+    
+    %% plot area
+    
     if ii==1
         hold off
-        P3=angle(u0)/pi+1; 
-        I3=(abs(u0).^2);
+        After_Beam_Phase=angle(After_Beam_Flow)/pi+1; 
+        After_Beam_Intensity=(abs(After_Beam_Flow).^2);
 %         figure(11) 
         subplot(4,4,5);
-        imagesc(x1/1e-3,y1/1e-3,I3);
+        imagesc(x1/1e-3,y1/1e-3,After_Beam_Intensity);
         hold on
-        rectangle('Position',[-S/2*dx1/1e-3 -S/2*dx1/1e-3 S*dx1/1e-3 S*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
-        text(S/2*dx1/1e-3, -S/2*dx1/1e-3,[num2str(Jratio(1,ii+1))],'Color','red');
+        rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
+        text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,ii+1))],'Color','red');
         axis square; axis xy; 
         colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
         title('result'); 
@@ -206,8 +167,7 @@ for ii = 1:r
         hold off
         
         subplot(4,4,6);
-        imagesc(x1/1e-3,y1/1e-3,P3); 
-        % xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+        imagesc(x1/1e-3,y1/1e-3,After_Beam_Phase); 
         axis square; axis xy; 
         colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
         title('align'); 
@@ -215,18 +175,17 @@ for ii = 1:r
     end
 end
 
-P3=angle(u0)/pi+1; 
-I3=(abs(u0).^2);
-R3=radCal(I3);
+After_Beam_Phase=angle(After_Beam_Flow)/pi+1; 
+After_Beam_Radius=radCal(After_Beam_Intensity);
 
+%% plot area
 hold off
 % figure(5) 
 subplot(4,4,7);
-imagesc(x1/1e-3,y1/1e-3,I3);
+imagesc(x1/1e-3,y1/1e-3,After_Beam_Intensity);
 hold on
-rectangle('Position',[-S/2*dx1/1e-3 -S/2*dx1/1e-3 S*dx1/1e-3 S*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
-text(S/2*dx1/1e-3, -S/2*dx1/1e-3,[num2str(Jratio(1,ii+1))],'Color','red');
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
+text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,ii+1))],'Color','red');
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
 title('result'); 
@@ -235,8 +194,7 @@ hold off
 
 % figure(6)
 subplot(4,4,8);
-imagesc(x1/1e-3,y1/1e-3,P3); 
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+imagesc(x1/1e-3,y1/1e-3,After_Beam_Phase); 
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
 title('align'); 
@@ -244,8 +202,7 @@ colorbar
 
 % figure(7)  
 subplot(4,4,9);
-imagesc(initu); 
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+imagesc(Initial_U); 
 axis square; axis xy; 
 colormap('gray');
 title('U'); 
@@ -253,8 +210,7 @@ colorbar
 
 % figure(7)  
 subplot(4,4,10);
-imagesc(bu); 
-% xlim([-0.2 0.2]); ylim([-0.2 0.2]);
+imagesc(Before_U); 
 axis square; axis xy; 
 colormap('gray');
 title('U'); 
@@ -263,52 +219,36 @@ colorbar
 % figure(8)                                                                                         % rescaled figure of J, delta J, change amount of au, cycle of au
 subplot(4,4,11);
 hold off
-plot(rescale(J),'b*-');                                                                             % cacluated J value during iterration
+plot(rescale(Target_Intensity_Sum),'b*-');                                                                             % cacluated J value during iterration
 hold on
-plot(rescale(W),'go-');                                                                             % improvement of output during iterration
-plot(rescale(D),'r^-');                                                                             % expectation of improvement of au
-plot(rescale(MU),'y^-');                                                                            % au's cycle count
+plot(rescale(dJ),'go-');                                                                             % improvement of output during iterration
+plot(rescale(MaxValue_U),'y^-');                                                                            % au's cycle count
 title('J'); 
 legend('J','del J','u diff','u max');%
 hold off
 
 % figure(9)
 subplot(4,4,12);
-% subplot(2,1,1);
-plot(MaxI,'b*-'); 
+plot(Max_Intensity,'b*-'); 
 title('Max'); 
 subplot(4,4,13);
-% subplot(2,1,2);
-plot(MinI,'ro-'); 
+plot(Min_Intensity,'ro-'); 
 title('Min'); 
 
 % figure(10) 
 subplot(4,4,14);
-% hold off
-% plot((J),'b*-'); 
-% hold on
-% plot((W),'go-'); 
-% % plot(rescale(D),'r^-'); 
-% % plot(rescale(MU),'y^-'); 
-% title('J'); 
-% legend('J','del J','u diff','u max');%
-% hold off
-
-% returnVal = padarray(expand(bu),[128 128],0,'both');
-returnVal = padarray(expand(round(bu*((2^16)/max(max(bu))))),[128 128],0,'both');
-% returnVal = uint16(padarray(expand(round(bu)),[128 128],0,'both'));
+returnVal = padarray(expand(round(Before_U*((2^16)/max(max(Before_U))))),[128 128],0,'both');
 returnVal = uint16(returnVal);
 imagesc(returnVal); 
 axis square; axis xy; 
 colormap('gray');
 colorbar
-% imwrite(returnVal,"gray","ExportImage.tiff","BitDepth",16);
 imwrite(returnVal,"ExportImage.tiff",'tiff');
 
 % figure(12) 
 subplot(4,4,15);
 hold off
-plot(J,'b*-'); 
+plot(Target_Intensity_Sum,'b*-'); 
 hold on
 title('J');  xlabel('iteration count'); ylabel('J value'); 
 hold off
@@ -316,21 +256,18 @@ hold off
 % figure(13) 
 subplot(4,4,16);
 hold off
-plot(Jratio,'b*-'); 
+plot(Target_Intensity_Ratio,'b*-'); 
 hold on
 title('intensity ratio');  xlabel('iteration count'); ylabel('percentage'); 
 hold off
 
 figure(2) 
 subplot(2,2,1);
-plot(J,'b*-'); 
+plot(Target_Intensity_Sum,'b*-'); 
 title('J'); 
 subplot(2,2,2);
-plot(W,'go-'); 
+plot(dJ,'go-'); 
 title('(J(1,ii+1) - J(1,ii))/J(1,ii+1)'); 
-subplot(2,2,3);
-plot(D,'r^-');
-title('expectation of improvement of au'); 
 subplot(2,2,4);
-plot(gamma,'y^-'); 
+plot(Gamma,'y^-'); 
 title('gamma'); 
