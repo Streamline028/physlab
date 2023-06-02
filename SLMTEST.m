@@ -31,7 +31,7 @@ prompt = {'x_offset: ', 'y_offset: ',['cam_width (max:', ...
     num2str(Camera_size(4)),'): '],'# of screen super pixel: ','Exposure'};
 dlg_title = 'Screenshot parameter';
 num_lines = 1;
-def = {'768','768','512','512','16','-2.5'};                               % Default setting
+def = {'768','768','512','512','8','-2.5'};                               % Default setting
 % # of screen super pixel 16일 때 120
 % # of screen super pixel 32일 때 496 497 528 529
 % # of screen super pixel 64일 때 1951 1952 1953 1954 2015 2016 2017 2018
@@ -56,7 +56,7 @@ load('initset.mat');                                                       % get
 
 Iterration_Count=1000;                                                     % iterration count
 Checking_Size=screen_super_pixel_width*2;                                  % searching size
-Super_Pixels=16;                                                           % SLM superpixel count
+Super_Pixels=8;                                                            % SLM superpixel count
 
 M=512;                                                                     % screen size (pixel)
 L1=M*15e-6;                                                                % screen size (m)
@@ -161,6 +161,8 @@ for ii = 1:Iterration_Count                                                % run
     After_U_expand = uint16(After_U_expand);
     Image.Image0 = SM_tiffencoder(After_U_expand);
     
+    perturb = rand(Super_Pixels, Super_Pixels).*(2*pi);
+    
     BNS_WriteImage(Image.Image0, Image);                                   % 만들어진 Hadamard basis matrix를 SLM에 삽입
     pause(0.03);                                                           % SLM 및 카메라 속도 조절
     BNS_WriteImage(Image.Image0, Image);                                   % 만들어진 Hadamard basis matrix를 SLM에 삽입
@@ -179,16 +181,24 @@ for ii = 1:Iterration_Count                                                % run
     else
         Variance_dU = abs(var(dU))./(ii);
     end
-    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/4;                         % calculate Gamma value
+    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/max(Image_Intensity_Sum);  % calculate Gamma value
     weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);                       % calcualte Gamma X dJ
-    J_prime = (weight.*(dU(1,ii)));                                        % change factor of au
+    J_prime = (weight.*(perturb));                                         % change factor of au
     Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
     Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
     Before_U = After_U;                                                    % save au in bu
     After_U = (After_U + J_prime);                                         % update au
     MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);                           % calculate au's cycle
-    if (After_U >= (2*pi))                                                 % simplify au
-        After_U = After_U - (2*pi);
+    for kk = 1:Super_Pixels                                                % simplify au
+        for ll = 1:Super_Pixels
+            if (After_U(kk,ll) >= (2*pi))
+                After_U(kk,ll) = rem(After_U(kk,ll), (2*pi));
+            end
+            if (After_U(kk,ll) < 0)
+                After_U(kk,ll) = After_U(kk,ll) - ...
+                    (2*pi)*(fix(After_U(kk,ll)/(2*pi)));
+            end
+        end
     end
     figure(51)
     subplot(4,1,1);

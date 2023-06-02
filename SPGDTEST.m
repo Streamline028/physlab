@@ -136,7 +136,7 @@ for ii = 1:Iterration_Count
     else
         Variance_dU = abs(var(var(dU)))./(ii);
     end
-    Gamma(1,ii) = max(Target_Intensity_Sum)/Target_Intensity_Sum(1,ii+1);  %(1-(ii/1000)+(400/(ii^1.25)))
+    Gamma(1,ii) = max(Image_Intensity_Sum)/Target_Intensity_Sum(1,ii+1);  %(1-(ii/1000)+(400/(ii^1.25)))
     Weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);
     J_prime = (Weight.*(perturb));
     Max_Intensity(1,ii+1)=max(max((After_Beam_Intensity)));
