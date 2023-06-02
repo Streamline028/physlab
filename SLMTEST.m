@@ -173,17 +173,23 @@ for ii = 1:Iterration_Count                                                % run
     Target_Intensity_Ratio(1,ii+1)=...
         Target_Intensity_Sum(1,ii+1)/Image_Intensity_Sum(1,ii+1)*100;      % ratio of total to target
     dJ(1,ii+1)=(Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii));% value of change in J
-    Gamma(1,ii) = ...
-        (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));     % calculate Gamma value
-    weight=Gamma(1,ii).*(dJ(1,ii+1));                                      % calcualte Gamma X dJ
     dU=(After_U-Before_U);                                                 % change of actual phase of u
-    J_prime = rem((BB.* weight), (2*pi));                                  % change factor of au
+    if (var(dU) == 0)                                                      % calculate variance of dU
+        Variance_dU = 0.000001;                                            % if dU has 1 element, variance of dU is 0.000001
+    else
+        Variance_dU = abs(var(dU))./(ii);
+    end
+    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/4;                         % calculate Gamma value
+    weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);                       % calcualte Gamma X dJ
+    J_prime = (weight.*(dU(1,ii)));                                        % change factor of au
     Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
     Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
     Before_U = After_U;                                                    % save au in bu
     After_U = (After_U + J_prime);                                         % update au
     MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);                           % calculate au's cycle
-    After_U = rem(After_U, (2*pi));                                        % simplify au
+    if (After_U >= (2*pi))                                                 % simplify au
+        After_U = After_U - (2*pi);
+    end
     figure(51)
     subplot(4,1,1);
     imagesc(Before_U)
@@ -200,7 +206,7 @@ for ii = 1:Iterration_Count                                                % run
     yticklabels ([])
     colorbar
     subplot(4,1,3);
-    imagesc(BB)
+    imagesc(dU)
     axis image
     title ('Phase difference')
     xticklabels ([])

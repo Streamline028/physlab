@@ -53,20 +53,17 @@ for ii = 1:Iterration_Count
     else
         Variance_dU = abs(var(dU))./(ii);
     end
-    Gamma(1,ii) = (1-(ii/1000)+(50/(ii^1.2)))/max(Target_Intensity_Sum(jj,:));
-    weight=Gamma(1,ii)*(dJ(1,ii+1))./(Variance_dU);
+    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/4; %max(Target_Intensity_Sum(jj,:))
+    weight = Gamma(1,ii)*(dJ(1,ii+1))./(Variance_dU);
     dUsave(1,ii) = dU(1,ii);
     J_prime = (weight.*(dU(1,ii))); 
-    if (J_prime >= (2*pi))
-        J_prime = J_prime - (2*pi);
-    end
     Intensity_save(1,ii+1)=After_Beam_Intensity;
     Before_U = After_U;
     After_U = (After_U + J_prime);
     if (After_U >= (2*pi))
         After_U = After_U - (2*pi);
     end
-    if abs(dJ(1,ii+1)) <= 1e-6
+    if dU(1,ii) <= 1e-12
         break
     end
     

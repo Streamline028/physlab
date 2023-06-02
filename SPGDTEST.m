@@ -6,9 +6,9 @@ addpath(genpath('.\module'))
 
 load('initset.mat');
 
-Iterration_Count=2000;
+Iterration_Count=1000;
 Checking_Size=16*4;%16*4;
-Super_Pixels=16;
+Super_Pixels=8;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -29,7 +29,7 @@ zf2=z2;
 Initial_Beam_Flow=zeros(M,M);
 Initial_Beam_Flow=exp(-(rho.^2)/w^2);
 
-perturb = (binornd(ones(16,16),ones(16,16)./2)-0.5); %.*(4*pi)
+perturb = rand(Super_Pixels, Super_Pixels);%(binornd(ones(Super_Pixels,Super_Pixels),ones(Super_Pixels,Super_Pixels)./2)-0.5); %.*(4*pi)
 
 Initial_Beam_Phase=angle(Initial_Beam_Flow);
 Initial_Beam_Intensity=(abs(Initial_Beam_Flow).^2);
@@ -118,6 +118,8 @@ for ii = 1:Iterration_Count
     
     Usave(:,:,ii+1) = After_U;
     After_U_expand = padarray(expand(After_U),[128 128],0,'both');
+    
+    perturb = rand(Super_Pixels, Super_Pixels).*(2*pi);
 
     After_Beam_Flow=propTF(Changing_Beam_Flow.*exp(-1i*After_U_expand),L1,lambda,2*z);
     After_Beam_Flow=propTF(After_Beam_Flow,L1,lambda,2*z);
@@ -128,21 +130,31 @@ for ii = 1:Iterration_Count
     Target_Intensity_Sum(1,ii+1) = chk_J((After_Beam_Intensity),Checking_Size);
     Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
-    Gamma(1,ii) = (max(Target_Intensity_Sum)*pi)/(Target_Intensity_Sum(1,ii+1));
-    Weight=Gamma(1,ii).*(dJ(1,ii+1));
     dU=(After_U-Before_U);
-    J_prime = (Weight.*(dU));
-    J_prime = rem((J_prime), (2*pi));
+    if (var(var(dU)) == 0)
+        Variance_dU = 0.000001;
+    else
+        Variance_dU = abs(var(var(dU)))./(ii);
+    end
+    Gamma(1,ii) = max(Target_Intensity_Sum)/Target_Intensity_Sum(1,ii+1);  %(1-(ii/1000)+(400/(ii^1.25)))
+    Weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);
+    J_prime = (Weight.*(perturb));
     Max_Intensity(1,ii+1)=max(max((After_Beam_Intensity)));
     Min_Intensity(1,ii+1)=min(min((After_Beam_Intensity)));
     Before_U = After_U;
     After_U = (After_U + J_prime);
-    After_U = rem(After_U, (2*pi));
     MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);
-    if (min(min(After_U))<0)
-        After_U = After_U - min(min(After_U));
+    for kk = 1:Super_Pixels
+        for ll = 1:Super_Pixels
+            if (After_U(kk,ll) >= (2*pi))
+                After_U(kk,ll) = rem(After_U(kk,ll), (2*pi));
+            end
+            if (After_U(kk,ll) < 0)
+                After_U(kk,ll) = After_U(kk,ll) - (2*pi)*(fix(After_U(kk,ll)/(2*pi)));
+            end
+        end
     end
-    if dJ(1,ii+1) == 0
+    if abs(dJ(1,ii+1)) <= 1e-24
         break
     end
     
@@ -171,12 +183,35 @@ for ii = 1:Iterration_Count
         title('align'); 
         colorbar
     end
+    figure(200)
+    
+    hold off
+    subplot(1,2,1);
+    imagesc(x1/1e-3,y1/1e-3,After_Beam_Intensity);
+    hold on
+    rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
+    text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,ii+1))],'Color','red');
+    axis square; axis xy; 
+    colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
+    title('result'); 
+    colorbar
+    hold off
+    
+    subplot(1,2,2);
+    imagesc(Before_U); 
+    axis square; axis xy; 
+    colormap('gray');
+    title('U'); 
+    colorbar
+    drawnow
 end
 
 After_Beam_Phase=angle(After_Beam_Flow)/pi+1; 
 After_Beam_Radius=radCal(After_Beam_Intensity);
 
 %% plot area
+figure(1)
+
 hold off
 % figure(5) 
 subplot(4,4,7);
@@ -220,9 +255,8 @@ hold off
 plot(rescale(Target_Intensity_Sum),'b*-');                                                                             % cacluated J value during iterration
 hold on
 plot(rescale(dJ),'go-');                                                                             % improvement of output during iterration
-plot(rescale(MaxValue_U),'y^-');                                                                            % au's cycle count
 title('J'); 
-legend('J','del J','u diff','u max');%
+legend('J','del J');%
 hold off
 
 % figure(9)
@@ -235,7 +269,7 @@ title('Min');
 
 % figure(10) 
 subplot(4,4,14);
-returnVal = padarray(expand(round(Before_U*((2^16)/max(max(Before_U))))),[128 128],0,'both');
+returnVal = padarray(expand(round(Before_U*((2^Super_Pixels)/max(max(Before_U))))),[128 128],0,'both');
 returnVal = uint16(returnVal);
 imagesc(returnVal); 
 axis square; axis xy; 
@@ -265,7 +299,7 @@ plot(Target_Intensity_Sum,'b*-');
 title('J'); 
 subplot(2,2,2);
 plot(dJ,'go-'); 
-title('(J(1,ii+1) - J(1,ii))/J(1,ii+1)'); 
+title('dJ'); 
 subplot(2,2,4);
 plot(Gamma,'y^-'); 
 title('gamma'); 
