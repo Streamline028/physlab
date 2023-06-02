@@ -8,7 +8,7 @@ load('initset.mat');
 
 Iterration_Count=1000;
 Checking_Size=16*4;%16*4;
-Super_Pixels=8;
+Super_Pixels=3;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -130,15 +130,15 @@ for ii = 1:Iterration_Count
     Target_Intensity_Sum(1,ii+1) = chk_J((After_Beam_Intensity),Checking_Size);
     Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
-    dU=(After_U-Before_U);
+    dU=perturb;%(After_U-Before_U);
     if (var(var(dU)) == 0)
         Variance_dU = 0.000001;
     else
         Variance_dU = abs(var(var(dU)))./(ii);
     end
-    Gamma(1,ii) = max(Image_Intensity_Sum)/Target_Intensity_Sum(1,ii+1);  %(1-(ii/1000)+(400/(ii^1.25)))
+    Gamma(1,ii) = (1-(ii/1000)+(1000/(ii^1.25)))/Target_Intensity_Sum(1,ii+1);  %(1-(ii/1000)+(400/(ii^1.25)))
     Weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);
-    J_prime = (Weight.*(perturb));
+    J_prime = (Weight.*(dU));
     Max_Intensity(1,ii+1)=max(max((After_Beam_Intensity)));
     Min_Intensity(1,ii+1)=min(min((After_Beam_Intensity)));
     Before_U = After_U;
@@ -150,7 +150,7 @@ for ii = 1:Iterration_Count
                 After_U(kk,ll) = rem(After_U(kk,ll), (2*pi));
             end
             if (After_U(kk,ll) < 0)
-                After_U(kk,ll) = After_U(kk,ll) - (2*pi)*(fix(After_U(kk,ll)/(2*pi)));
+                After_U(kk,ll) = After_U(kk,ll) - (2*pi)*(fix(After_U(kk,ll)/(2*pi))-1);
             end
         end
     end
