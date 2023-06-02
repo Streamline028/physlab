@@ -44,12 +44,12 @@ for ii = 1:Iterration_Count
     After_Beam_Intensity = abs(After_Beam_Flow).^2;
     Usave(1,ii+1) = After_U;
     
-    perturb = rand()*(2*pi);
+    dU = rand()*(2*pi);
     
     Target_Intensity_Sum(jj,ii+1) = After_Beam_Intensity;
     
     dJ(1,ii+1)=((Target_Intensity_Sum(jj,ii+1) - Target_Intensity_Sum(jj,ii)));
-    dU(1,ii)=perturb;%(After_U-Before_U);
+    dU(1,ii)=dU*(After_U-Before_U);
     if (var(dU) == 0) 
         Variance_dU = 0.000001;
     else

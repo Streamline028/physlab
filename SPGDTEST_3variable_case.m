@@ -10,7 +10,7 @@ count = 0;
 
 Iterration_Count=100;
 
-filename = 'test_reduced2.gif';
+filename = 'test_reduced3.gif';
 
 M=512;
 L1=M*15e-6; 
@@ -56,7 +56,7 @@ for jj = 1:10000
         else
             Variance_dU = abs(var(dU));
         end
-        Gamma(1,ii) = (1-(ii/1000)+(100/(ii^1.2)))/max(Target_Intensity_Sum(jj,:));%9
+        Gamma(1,ii) = (1-(ii/1000)+(100/(ii^600)))/max(Target_Intensity_Sum(jj,:));%9
         Gamma(isnan(Gamma)) = 1;
         weight=Gamma(1,ii) .* (dJ(1,ii+1))./(Variance_dU);
         dUsave(:,ii) = dU;
@@ -164,15 +164,8 @@ figure(30)
 bar([0:9],Intensity_manual_store); 
 ylim([0 jj]);
 title([num2str(jj),' iteration']); 
-text(-0.3, Intensity_manual_store(1,1)+500,[num2str((Intensity_manual_store(1,1)/jj)*100),'%'],'Color','m');
-text(0.7, Intensity_manual_store(1,2)+500,[num2str((Intensity_manual_store(1,2)/jj)*100),'%'],'Color','m');
-text(1.7, Intensity_manual_store(1,3)+500,[num2str((Intensity_manual_store(1,3)/jj)*100),'%'],'Color','m');
-text(2.7, Intensity_manual_store(1,4)+500,[num2str((Intensity_manual_store(1,4)/jj)*100),'%'],'Color','m');
-text(3.7, Intensity_manual_store(1,5)+500,[num2str((Intensity_manual_store(1,5)/jj)*100),'%'],'Color','m');
-text(4.7, Intensity_manual_store(1,6)+500,[num2str((Intensity_manual_store(1,6)/jj)*100),'%'],'Color','m');
-text(5.7, Intensity_manual_store(1,7)+500,[num2str((Intensity_manual_store(1,7)/jj)*100),'%'],'Color','m');
-text(6.7, Intensity_manual_store(1,8)+500,[num2str((Intensity_manual_store(1,8)/jj)*100),'%'],'Color','m');
-text(7.7, Intensity_manual_store(1,9)+500,[num2str((Intensity_manual_store(1,9)/jj)*100),'%'],'Color','m');
-text(8.7, Intensity_manual_store(1,10)+500,[num2str((Intensity_manual_store(1,10)/jj)*100),'%'],'Color','m');
+for qq = 1:10
+    text(qq-1.3, Intensity_manual_store(1,qq)+500,[num2str((Intensity_manual_store(1,qq)/jj)*100),'%'],'Color','m');
+end
 
 100*count/jj
