@@ -130,7 +130,7 @@ for ii = 1:Iterration_Count
     Target_Intensity_Sum(1,ii+1) = chk_J((After_Beam_Intensity),Checking_Size);
     Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));
-    dU=perturb;%(After_U-Before_U);
+    dU=perturb.*(After_U-Before_U);
     if (var(var(dU)) == 0)
         Variance_dU = 0.000001;
     else
