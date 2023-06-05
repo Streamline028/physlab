@@ -55,7 +55,7 @@ for ii = 1:Iterration_Count
     else
         Variance_dU = abs(var(dU))./(ii);
     end
-    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/4; %max(Target_Intensity_Sum(jj,:))
+    Gamma(1,ii) = (-(ii/1000)-(400/(ii^1.25)))/max(Target_Intensity_Sum(jj,:));
     weight = Gamma(1,ii)*(dJ(1,ii+1))./(Variance_dU);
     dUsave(1,ii) = dU(1,ii);
     J_prime = (weight.*(dU(1,ii))); 

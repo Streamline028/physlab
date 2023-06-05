@@ -152,7 +152,9 @@ pause(0.03);
 
 %% SPGD Loop
 
-for ii = 1:Iterration_Count                                                % run until changement is 0
+ii = 1;                                                                    % initial ii
+
+while (abs(dJ(1,ii)) >= 1e-24)                                             % run until changement is 0
     
     After_U_expand_ori = padarray(expand(After_U),[128 128],0,'both');     % generate SLM mask
 %     bu_ori = padarray(expand(bu),[128 128],0,'both');                    % generate SLM mask
@@ -174,8 +176,10 @@ for ii = 1:Iterration_Count                                                % run
     Target_Intensity_Sum(1,ii+1) = chk_J(Shot_total,Checking_Size);        % calculate target value
     Target_Intensity_Ratio(1,ii+1)=...
         Target_Intensity_Sum(1,ii+1)/Image_Intensity_Sum(1,ii+1)*100;      % ratio of total to target
+    Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
+    Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
     dJ(1,ii+1)=(Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii));% value of change in J
-    dU=(After_U-Before_U);                                                 % change of actual phase of u
+    dU=perturb.*(After_U-Before_U);                                        % change of actual phase of u
     if (var(dU) == 0)                                                      % calculate variance of dU
         Variance_dU = 0.000001;                                            % if dU has 1 element, variance of dU is 0.000001
     else
@@ -183,9 +187,7 @@ for ii = 1:Iterration_Count                                                % run
     end
     Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/max(Image_Intensity_Sum);  % calculate Gamma value
     weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);                       % calcualte Gamma X dJ
-    J_prime = (weight.*(perturb));                                         % change factor of au
-    Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
-    Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
+    J_prime = (weight.*(dU));                                              % change factor of au
     Before_U = After_U;                                                    % save au in bu
     After_U = (After_U + J_prime);                                         % update au
     MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);                           % calculate au's cycle
@@ -249,6 +251,7 @@ for ii = 1:Iterration_Count                                                % run
         colorbar
         hold off
     end
+    ii = ii+1;
 end
 toc;
 % P3=angle(u0)/pi+1;                                                       % calculate phase
@@ -265,7 +268,7 @@ rectangle('Position',...
     Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], ...
     'EdgeColor','r','LineWidth',1);
 text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,...
-    ['J=',num2str(Target_Intensity_Ratio(1,ii+1))],'Color','red');
+    ['J=',num2str(Target_Intensity_Ratio(1,ii))],'Color','red');
 % xlim([-0.2 0.2]); ylim([-0.2 0.2]);
 axis square; axis xy; 
 colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 

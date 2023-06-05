@@ -5,7 +5,7 @@ close all;
 addpath(genpath('.\Book_Reference_Code'))
 addpath(genpath('.\module'))
 
-mode = 6;
+mode = 16*16;
 Intensity_manual_store = zeros(1,((mode^2)+1));
 count = 0;
 
@@ -41,9 +41,9 @@ for jj = 1:total_Iterration
     Target_Intensity_Sum(jj,1) = Before_Beam_Intensity;
     dJ(1,1)= 1;
     dUsave(:,1) = abs(After_U-Before_U);
-
-    for ii = 1:Iterration_Count
-
+    ii = 1;
+    while (dJ(1,ii) ~= 0) %for ii = 1:Iterration_Count
+        
         After_Beam_Flow = 0;
         for pp=1:mode
             After_Beam_Flow = After_Beam_Flow + exp(-1i*After_U(1,pp));
@@ -63,7 +63,7 @@ for jj = 1:total_Iterration
         else
             Variance_dU = abs(var(dU));
         end
-        Gamma(1,ii) = (10^9)/max(Target_Intensity_Sum(jj,:));%9
+        Gamma(1,ii) = (1-((ii^ii)/10)+(1/(ii^10)))/max(Target_Intensity_Sum(jj,:));%9
         Gamma(isnan(Gamma)) = 1;
         weight=Gamma(1,ii) .* (dJ(1,ii+1))./(Variance_dU);
         dUsave(:,ii) = dU;
@@ -121,19 +121,44 @@ for jj = 1:total_Iterration
     % %     hold off;
     % %     title('du');
     % %     drawnow
-
-        if dJ(1,ii+1) == 0
-            break
-        end
+%         figure(200+jj)
+%         set(gcf,'position',[1024,410,560,420]);
+%         clf
+%         subplot(2,2,1);
+%         plot(Target_Intensity_Sum(jj,:),'b*-'); 
+%         title('beam 중심의 intensity'); 
+%         subplot(2,2,2);
+%         plot(dJ,'go-'); 
+%         title('intensity의 변화량'); 
+%         subplot(2,2,3);
+%         hold on;
+%         for pp=1:mode
+%             plot((Usave(mode,:)./(2*pi)),'r');
+%         end
+%         hold off;
+%         title('각 beam의 위상'); 
+%         subplot(2,2,4);
+%         hold on;
+%         for pp=1:mode
+%             plot((dUsave(mode,:)./(2*pi)),'r');
+%         end
+%         hold off;
+%         title('각 beam의 위상의 변화량'); 
+% 
+%         if dJ(1,ii+1) == 0
+%             pause(2);
+%             break
+%         end
+        ii = ii+1;
 
     end
 
-    Intensity_Storing(1,jj) = Target_Intensity_Sum(jj,ii+1);
-    IS = Target_Intensity_Sum(jj,ii+1);
+    Intensity_Storing(1,jj) = Target_Intensity_Sum(jj,ii);
+    IS = Target_Intensity_Sum(jj,ii);
 
     Intensity_manual_store(1,round(IS)+1) = Intensity_manual_store(1,round(IS)+1)+1;
 
-    if (Target_Intensity_Sum(jj,ii+1)>=(mode^2)-0.2)
+    if (Target_Intensity_Sum(jj,ii)>=(mode^2)-0.2)
         count = count+1;
     end
 
