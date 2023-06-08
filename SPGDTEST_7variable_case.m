@@ -5,11 +5,11 @@ close all;
 addpath(genpath('.\Book_Reference_Code'))
 addpath(genpath('.\module'))
 
-mode = 16*16;
+mode = 7;
 Intensity_manual_store = zeros(1,((mode^2)+1));
 count = 0;
 
-Iterration_Count=1000;
+Iterration_Count = 100;
 total_Iterration = 2000;
 
 filename = 'test_reduced4.gif';
@@ -63,7 +63,7 @@ for jj = 1:total_Iterration
         else
             Variance_dU = abs(var(dU));
         end
-        Gamma(1,ii) = (1-((ii^ii)/10)+(1/(ii^10)))/max(Target_Intensity_Sum(jj,:));%9
+        Gamma(1,ii) = (1+((ii)/10)-(1/(ii^10)))/max(Target_Intensity_Sum(jj,:));%9
         Gamma(isnan(Gamma)) = 1;
         weight=Gamma(1,ii) .* (dJ(1,ii+1))./(Variance_dU);
         dUsave(:,ii) = dU;
@@ -169,33 +169,43 @@ set(gcf,'position',[1024,410,560,420]);
 clf
 subplot(2,2,1);
 plot(Target_Intensity_Sum(jj,:),'b*-'); 
+xlim([0 ii+1]);
 title('beam 중심의 intensity'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,2);
 plot(dJ,'go-'); 
+xlim([0 ii+1]);
 title('intensity의 변화량'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,3);
 hold on;
 for pp=1:mode
-    plot((Usave(mode,:)./(2*pi)),'r');
+    plot((Usave(pp,:)));
 end
+xlim([0 ii+1]);
 hold off;
 title('각 beam의 위상'); 
+xlabel('반복 횟수'); ylabel('Phase');
 subplot(2,2,4);
 hold on;
 for pp=1:mode
-    plot((dUsave(mode,:)./(2*pi)),'r');
+    plot((dUsave(pp,:)));
 end
+xlim([0 ii+1]);
 hold off;
 title('각 beam의 위상의 변화량'); 
+xlabel('반복 횟수'); ylabel('Phase');
 
 figure(20) 
 cdfplot(Intensity_Storing);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('누적 발견 횟수');
 
 figure(30) 
 bar([0:mode^2],Intensity_manual_store); 
 ylim([0 jj]);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('발견 횟수');
 for qq = 1:((mode^2)+1)
     text(qq-1.3, Intensity_manual_store(1,qq)+(jj/20),[num2str((Intensity_manual_store(1,qq)/jj)*100),'%'],'Color','m');
 end

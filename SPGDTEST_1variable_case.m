@@ -55,13 +55,13 @@ for ii = 1:Iterration_Count
     else
         Variance_dU = abs(var(dU))./(ii);
     end
-    Gamma(1,ii) = (-(ii/1000)-(400/(ii^1.25)))/max(Target_Intensity_Sum(jj,:));
+    Gamma(1,ii) = (1+(ii/1000)-(400/(ii^2))-(4000/(ii^5))+((ii^9)/3000))/(max(Target_Intensity_Sum(jj,:))^ii);
     weight = Gamma(1,ii)*(dJ(1,ii+1))./(Variance_dU);
     dUsave(1,ii) = dU(1,ii);
     J_prime = (weight.*(dU(1,ii))); 
     Intensity_save(1,ii+1)=After_Beam_Intensity;
     Before_U = After_U;
-    After_U = (After_U + J_prime);
+    After_U = (After_U - J_prime);
     if (After_U >= (2*pi))
         After_U = After_U - (2*pi);
     end
@@ -88,15 +88,19 @@ figure(2)
 subplot(2,2,1);
 plot(Target_Intensity_Sum(jj,:),'b*-'); 
 title('beam 중심의 intensity'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,2);
 plot(dJ,'go-'); 
 title('intensity의 변화량'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,3);
 plot(Usave./(2*pi),'r^-');
 title('바꾸어 주는 빛의 위상'); 
+xlabel('반복 횟수'); ylabel('Phase');
 subplot(2,2,4);
 plot(dUsave,'y^-'); 
 title('위상의 변화량'); 
+xlabel('반복 횟수'); ylabel('Phase');
 
 figure(10) 
 plot(Gamma,'*-'); 
@@ -105,11 +109,13 @@ title('gamma');
 figure(20) 
 cdfplot(Intensity_Storing);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('누적 발견 횟수');
 
 figure(30) 
 bar([0:4],Intensity_manual_store); 
 ylim([0 jj]);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('발견 횟수');
 text(-0.3, Intensity_manual_store(1,1)+500,[num2str((Intensity_manual_store(1,1)/jj)*100),'%'],'Color','m');
 text(0.7, Intensity_manual_store(1,2)+500,[num2str((Intensity_manual_store(1,2)/jj)*100),'%'],'Color','m');
 text(1.7, Intensity_manual_store(1,3)+500,[num2str((Intensity_manual_store(1,3)/jj)*100),'%'],'Color','m');

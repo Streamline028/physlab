@@ -7,8 +7,8 @@ addpath(genpath('.\module'))
 load('initset.mat');
 
 Iterration_Count=1000;
-Checking_Size=16*2;%16*4;
-Super_Pixels=16;
+Checking_Size=16*4;%16*4;
+Super_Pixels=4;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -63,11 +63,11 @@ colorbar
 %% SPGD initializing
 
 Before_U = zeros(Super_Pixels,Super_Pixels).*(2*pi);
-After_U = rand([Super_Pixels,Super_Pixels]).*(2*pi);
-After_U = preset1;
+%After_U = rand([Super_Pixels,Super_Pixels]).*(2*pi);
+%After_U = preset1;
 
-Usave(:,:,1) = After_U;
-Initial_U = After_U;
+Usave(:,:,1) = Before_U;
+Initial_U = Before_U;
 
 Before_U_expand = padarray(expand(Before_U),[128 128],0,'both');
 
@@ -87,7 +87,7 @@ dJ(1,1)= 1;
 MaxValue_U(1,1)=max(max(angle(Before_U)));
 Max_Intensity(1,1)=max(max((abs(Before_Beam_Intensity).^2)));
 Min_Intensity(1,1)=min(min((abs(Before_Beam_Intensity).^2)));
-dUsave(:,:,1) = (After_U-Before_U);
+dUsave(:,:,1) = (Before_U);
 
 %% plot area
 
@@ -116,12 +116,11 @@ colorbar
 
 ii = 1;
 
-while (abs(dJ(1,ii)) >= 1e-24) %for ii = 1:Iterration_Count
+while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
     
+    After_U = rand([Super_Pixels, Super_Pixels]).*(2*pi);
     Usave(:,:,ii+1) = After_U;
     After_U_expand = padarray(expand(After_U),[128 128],0,'both');
-    
-    perturb = rand(Super_Pixels, Super_Pixels).*(2*pi);
 
     After_Beam_Flow=propTF(Changing_Beam_Flow.*exp(-1i*After_U_expand),L1,lambda,2*z);
     After_Beam_Flow=propTF(After_Beam_Flow,L1,lambda,2*z);
@@ -135,28 +134,40 @@ while (abs(dJ(1,ii)) >= 1e-24) %for ii = 1:Iterration_Count
     Min_Intensity(1,ii+1)=min(min((After_Beam_Intensity)));
     Max_Intensity_ratio(1,ii) = (Max_Intensity(1,ii+1)-Max_Intensity(1,ii))/Max_Intensity(1,ii);
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));%*Target_Intensity_Ratio(1,ii+1)*Max_Intensity_ratio(1,ii);
-    dU=perturb;%.*(After_U-Before_U);
+    dU=After_U;%.*(After_U-Before_U);
     if (var(var(dU)) == 0)
         Variance_dU = 0.000001;
     else
         Variance_dU = abs(var(var(dU)))./(ii);
     end
-    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/(Target_Intensity_Sum(1,ii+1));  %(1-(ii/1000)+(400/(ii^1.25)))
+    Gamma(1,ii) = (1-((ii)/1000)+(100/(ii^1.2)))/(Target_Intensity_Sum(1,ii+1));  %(1-(ii/1000)+(400/(ii^1.25)))
     Weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);
     J_prime = (Weight.*(dU));
-    Before_U = After_U;
-    After_U = (After_U + J_prime);
-    MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);
+    Before_U = (Before_U + J_prime);
+    MaxValue_U(1,ii+1)=max(max(Before_U))/(2*pi);
+    Before_U = mod(Before_U, (2*pi));
     for kk = 1:Super_Pixels
         for ll = 1:Super_Pixels
-            if (After_U(kk,ll) >= (2*pi))
-                After_U(kk,ll) = rem(After_U(kk,ll), (2*pi));
-            end
-            if (After_U(kk,ll) < 0)
-                After_U(kk,ll) = After_U(kk,ll) - (2*pi)*(fix(After_U(kk,ll)/(2*pi))-1);
+            if (Before_U(kk,ll) < 0)
+                Before_U(kk,ll) = Before_U(kk,ll) - (2*pi)*(fix(Before_U(kk,ll)/(2*pi))-1);
             end
         end
     end
+    
+    Before_U_expand = padarray(expand(Before_U),[128 128],0,'both');
+
+    Before_Beam_Flow=propTF(Changing_Beam_Flow.*exp(-1i*Before_U_expand),L1,lambda,2*z);
+    Before_Beam_Flow=propTF(Before_Beam_Flow,L1,lambda,2*z);
+    Before_Beam_Intensity = abs(Before_Beam_Flow).^2;
+    Intensity_save(:,:,ii) = Before_Beam_Intensity;
+    
+    Image_Intensity_Sum(1,ii+1) = sum(sum((Before_Beam_Intensity)));
+    Target_Intensity_Sum(1,ii+1) = chk_J((Before_Beam_Intensity),Checking_Size);
+    Target_Intensity_Ratio(1,ii+1)=1/(Image_Intensity_Sum(1,ii+1)/Target_Intensity_Sum(1,ii+1)-1)*100;
+    Max_Intensity(1,ii+1)=max(max((Before_Beam_Intensity)));
+    Min_Intensity(1,ii+1)=min(min((Before_Beam_Intensity)));
+    Max_Intensity_ratio(1,ii) = (Max_Intensity(1,ii+1)-Max_Intensity(1,ii))/Max_Intensity(1,ii);
+    
     ii = ii+1;
     %% plot area
     

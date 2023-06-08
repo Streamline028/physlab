@@ -137,35 +137,51 @@ set(gcf,'position',[1024,410,560,420]);
 clf
 subplot(2,2,1);
 plot(Target_Intensity_Sum(jj,:),'b*-'); 
+xlim([0 ii+1]);
 title('beam 중심의 intensity'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,2);
 plot(dJ,'go-'); 
+xlim([0 ii+1]);
 title('intensity의 변화량'); 
+xlabel('반복 횟수'); ylabel('intensity');
 subplot(2,2,3);
 hold on;
-plot((Usave(1,:)./(2*pi)),'r');
-plot((Usave(2,:)./(2*pi)),'b');
+plot((Usave(1,:)),'r');
+plot((Usave(2,:)),'b');
+xlim([0 ii+1]);
 hold off;
 title('각 beam의 위상'); 
+xlabel('반복 횟수'); ylabel('Phase');
 subplot(2,2,4);
 hold on;
-plot((dUsave(1,:)./(2*pi)),'r');
-plot((dUsave(2,:)./(2*pi)),'b');
+plot((dUsave(1,:)),'r');
+plot((dUsave(2,:)),'b');
+xlim([0 ii+1]);
 hold off;
 title('각 beam의 위상의 변화량'); 
+xlabel('반복 횟수'); ylabel('Phase');
 
 figure(20) 
 cdfplot(Intensity_Storing);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('누적 발견 횟수');
 
 figure(30) 
 bar([0:4],Intensity_manual_store); 
 ylim([0 jj]);
 title([num2str(jj),' iteration']); 
+xlabel('intensity'); ylabel('발견 횟수');
 text(-0.3, Intensity_manual_store(1,1)+500,[num2str((Intensity_manual_store(1,1)/jj)*100),'%'],'Color','m');
 text(0.7, Intensity_manual_store(1,2)+500,[num2str((Intensity_manual_store(1,2)/jj)*100),'%'],'Color','m');
 text(1.7, Intensity_manual_store(1,3)+500,[num2str((Intensity_manual_store(1,3)/jj)*100),'%'],'Color','m');
 text(2.7, Intensity_manual_store(1,4)+500,[num2str((Intensity_manual_store(1,4)/jj)*100),'%'],'Color','m');
 text(3.7, Intensity_manual_store(1,5)+500,[num2str((Intensity_manual_store(1,5)/jj)*100),'%'],'Color','m');
+
+figure(52)
+plot(Gamma,'b*-');
+xlim([0 ii+1]); 
+title('Gamma'); 
+xlabel('반복 횟수'); ylabel('Gamma');
 
 100*count/jj
