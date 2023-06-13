@@ -1,6 +1,7 @@
 *.pdf
 *.tiff
 *.fig
+*.mat
 *.gif
 *.asv
 *.docx

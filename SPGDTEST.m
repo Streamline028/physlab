@@ -8,7 +8,7 @@ load('initset.mat');
 
 Iterration_Count=1000;
 Checking_Size=16*4;%16*4;
-Super_Pixels=4;
+Super_Pixels=16;
 
 M=512; %256
 L1=M*15e-6; %3.84e-3; 
@@ -116,7 +116,7 @@ colorbar
 
 ii = 1;
 
-while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
+while (abs(dJ(1,ii)) >= 1e-4) %for ii = 1:Iterration_Count
     
     After_U = rand([Super_Pixels, Super_Pixels]).*(2*pi);
     Usave(:,:,ii+1) = After_U;
@@ -134,13 +134,13 @@ while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
     Min_Intensity(1,ii+1)=min(min((After_Beam_Intensity)));
     Max_Intensity_ratio(1,ii) = (Max_Intensity(1,ii+1)-Max_Intensity(1,ii))/Max_Intensity(1,ii);
     dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));%*Target_Intensity_Ratio(1,ii+1)*Max_Intensity_ratio(1,ii);
-    dU=After_U;%.*(After_U-Before_U);
+    dU=(After_U-Before_U);
     if (var(var(dU)) == 0)
         Variance_dU = 0.000001;
     else
-        Variance_dU = abs(var(var(dU)))./(ii);
+        Variance_dU = abs(var(var(dU)));
     end
-    Gamma(1,ii) = (1-((ii)/1000)+(100/(ii^1.2)))/(Target_Intensity_Sum(1,ii+1));  %(1-(ii/1000)+(400/(ii^1.25)))
+    Gamma(1,ii) = 1/max(Target_Intensity_Sum);  %(1-(ii/1000)+(400/(ii^1.25)))
     Weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);
     J_prime = (Weight.*(dU));
     Before_U = (Before_U + J_prime);
@@ -167,17 +167,17 @@ while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
     Max_Intensity(1,ii+1)=max(max((Before_Beam_Intensity)));
     Min_Intensity(1,ii+1)=min(min((Before_Beam_Intensity)));
     Max_Intensity_ratio(1,ii) = (Max_Intensity(1,ii+1)-Max_Intensity(1,ii))/Max_Intensity(1,ii);
+    dJ(1,ii+1)=((Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii)));%*Target_Intensity_Ratio(1,ii+1)*Max_Intensity_ratio(1,ii);
     
     ii = ii+1;
     %% plot area
     
     if ii==1
         hold off
-        After_Beam_Phase=angle(After_Beam_Flow)/pi+1; 
-        After_Beam_Intensity=(abs(After_Beam_Flow).^2);
+        Before_Beam_Phase=angle(Before_Beam_Flow)/pi+1; 
 %         figure(11) 
         subplot(4,4,5);
-        imagesc(x1/1e-3,y1/1e-3,After_Beam_Intensity);
+        imagesc(x1/1e-3,y1/1e-3,Before_Beam_Intensity);
         hold on
         rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
         text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,ii+1))],'Color','red');
@@ -188,7 +188,7 @@ while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
         hold off
         
         subplot(4,4,6);
-        imagesc(x1/1e-3,y1/1e-3,After_Beam_Phase); 
+        imagesc(x1/1e-3,y1/1e-3,Before_Beam_Phase); 
         axis square; axis xy; 
         colormap('gray'); xlabel('x (mm)'); ylabel('y (mm)'); 
         title('align'); 
@@ -197,8 +197,8 @@ while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
     figure(200)
     
     hold off
-    subplot(1,2,1);
-    imagesc(x1/1e-3,y1/1e-3,After_Beam_Intensity);
+    subplot(2,2,1);
+    imagesc(x1/1e-3,y1/1e-3,Before_Beam_Intensity,[0 4]);
     hold on
     rectangle('Position',[-Checking_Size/2*dx1/1e-3 -Checking_Size/2*dx1/1e-3 Checking_Size*dx1/1e-3 Checking_Size*dx1/1e-3], 'EdgeColor','r','LineWidth',1);
     text(Checking_Size/2*dx1/1e-3, -Checking_Size/2*dx1/1e-3,[num2str(Target_Intensity_Ratio(1,ii))],'Color','red');
@@ -208,7 +208,15 @@ while (abs(dJ(1,ii)) >= 1e-6) %for ii = 1:Iterration_Count
     colorbar
     hold off
     
-    subplot(1,2,2);
+    subplot(2,2,2);
+    imagesc(Before_U); 
+    axis square; axis xy; 
+    colormap('gray');
+    title('U'); 
+    colorbar
+    drawnow
+    
+    subplot(2,2,3);
     imagesc(Before_U); 
     axis square; axis xy; 
     colormap('gray');

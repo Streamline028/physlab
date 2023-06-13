@@ -140,7 +140,6 @@ hold off
 
 %% after u expand
 After_U_expand_ori = padarray(expand(After_U),[128 128],0,'both');         % generate SLM mask
-%     bu_ori = padarray(expand(bu),[128 128],0,'both');                    % generate SLM mask
 After_U_expand = Tilt_reference_mode+(After_U_expand_ori*2^16-1);
 After_U_expand = mod(After_U_expand,2^16-1);
 After_U_expand = uint16(After_U_expand);
@@ -156,14 +155,13 @@ ii = 1;                                                                    % ini
 
 while (abs(dJ(1,ii)) >= 1e-24)                                             % run until changement is 0
     
+    After_U = rand([Super_Pixels,Super_Pixels]).*(2*pi);                   % generate initial after u (since then au)
+    
     After_U_expand_ori = padarray(expand(After_U),[128 128],0,'both');     % generate SLM mask
-%     bu_ori = padarray(expand(bu),[128 128],0,'both');                    % generate SLM mask
     After_U_expand = Tilt_reference_mode+(After_U_expand_ori*2^16-1);
     After_U_expand = mod(After_U_expand,2^16-1);
     After_U_expand = uint16(After_U_expand);
     Image.Image0 = SM_tiffencoder(After_U_expand);
-    
-    perturb = rand(Super_Pixels, Super_Pixels).*(2*pi);
     
     BNS_WriteImage(Image.Image0, Image);                                   % 만들어진 Hadamard basis matrix를 SLM에 삽입
     pause(0.03);                                                           % SLM 및 카메라 속도 조절
@@ -179,29 +177,47 @@ while (abs(dJ(1,ii)) >= 1e-24)                                             % run
     Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
     Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
     dJ(1,ii+1)=(Target_Intensity_Sum(1,ii+1) - Target_Intensity_Sum(1,ii));% value of change in J
-    dU=perturb.*(After_U-Before_U);                                        % change of actual phase of u
+    dU=(After_U-Before_U);                                                 % change of actual phase of u
     if (var(dU) == 0)                                                      % calculate variance of dU
         Variance_dU = 0.000001;                                            % if dU has 1 element, variance of dU is 0.000001
     else
         Variance_dU = abs(var(dU))./(ii);
     end
-    Gamma(1,ii) = (1-(ii/1000)+(400/(ii^1.25)))/max(Image_Intensity_Sum);  % calculate Gamma value
+    Gamma(1,ii) = (1-((ii)/1000)+(100/(ii^1.2)))/max(Target_Intensity_Sum);% calculate Gamma value
     weight=Gamma(1,ii).*(dJ(1,ii+1))./(Variance_dU);                       % calcualte Gamma X dJ
     J_prime = (weight.*(dU));                                              % change factor of au
-    Before_U = After_U;                                                    % save au in bu
-    After_U = (After_U + J_prime);                                         % update au
-    MaxValue_U(1,ii+1)=max(max(After_U))/(2*pi);                           % calculate au's cycle
-    for kk = 1:Super_Pixels                                                % simplify au
+    Before_U = (Before_U + J_prime);                                       % save au in bu
+    MaxValue_U(1,ii+1)=max(max(Before_U))/(2*pi);                          % calculate bu's cycle
+    Before_U = mod(Before_U, (2*pi));
+    for kk = 1:Super_Pixels                                                % simplify bu
         for ll = 1:Super_Pixels
-            if (After_U(kk,ll) >= (2*pi))
-                After_U(kk,ll) = rem(After_U(kk,ll), (2*pi));
-            end
-            if (After_U(kk,ll) < 0)
-                After_U(kk,ll) = After_U(kk,ll) - ...
-                    (2*pi)*(fix(After_U(kk,ll)/(2*pi)));
+            if (Before_U(kk,ll) < 0)
+                Before_U(kk,ll) = Before_U(kk,ll) - ...
+                    (2*pi)*(fix(Before_U(kk,ll)/(2*pi)));
             end
         end
     end
+    
+    Before_U_expand_ori = padarray(expand(Before_U),[128 128],0,'both');     % generate SLM mask
+    Before_U_expand = Tilt_reference_mode+(Before_U_expand_ori*2^16-1);
+    Before_U_expand = mod(Before_U_expand,2^16-1);
+    Before_U_expand = uint16(Before_U_expand);
+    Image.Image0 = SM_tiffencoder(Before_U_expand);
+    
+    BNS_WriteImage(Image.Image0, Image);                                   % 만들어진 Hadamard basis matrix를 SLM에 삽입
+    pause(0.03);                                                           % SLM 및 카메라 속도 조절
+    BNS_WriteImage(Image.Image0, Image);                                   % 만들어진 Hadamard basis matrix를 SLM에 삽입
+    pause(0.03);                                                           % SLM 및 카메라 속도 조절
+    Shot_total = getsnapshot(Source.Parent);                               % Camera 찍기
+    pause(1);
+    
+    Image_Intensity_Sum(1,ii+1) = sum(sum(Shot_total));                    % calculate total value
+    Target_Intensity_Sum(1,ii+1) = chk_J(Shot_total,Checking_Size);        % calculate target value
+    Target_Intensity_Ratio(1,ii+1)=...
+        Target_Intensity_Sum(1,ii+1)/Image_Intensity_Sum(1,ii+1)*100;      % ratio of total to target
+    Max_Intensity(1,ii+1)=max(max(Shot_total));                            % find image's maximum value
+    Min_Intensity(1,ii+1)=min(min(Shot_total));                            % find image's minimum value
+    
     figure(51)
     subplot(4,1,1);
     imagesc(Before_U)
